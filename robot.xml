@@ -14,7 +14,7 @@
       balanceinertia="false"
       angle="degree"
       eulerseq="xyz"
-      meshdir="asset\v5"
+      meshdir="asset/v5"
       discardvisual="false"
       inertiafromgeom="false"/>
 
