@@ -21,6 +21,8 @@ from mjlab.viewer import ViewerConfig
 
 from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 
+from rewards import ankle_mechanical_limit_penalty
+
 
 def standing_env_cfg() -> ManagerBasedRlEnvCfg:
 
@@ -31,6 +33,17 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
     robot_cfg = SceneEntityCfg(
         "robot",
         joint_names=ACTUATED_JOINTS,
+        preserve_order=True,
+    )
+
+    ankle_mechanical_cfg = SceneEntityCfg(
+        "robot",
+        joint_names=(
+            "ankle_pitch_left",
+            "calf_pitch_left",
+            "ankle_pitch_right",
+            "calf_pitch_right",
+        ),
         preserve_order=True,
     )
 
@@ -152,6 +165,15 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
         "action_rate": RewardTermCfg(
             func=mdp.action_rate_l2,
             weight=-0.05,
+        ),
+
+        "ankle_mechanical_limit": RewardTermCfg(
+            func=ankle_mechanical_limit_penalty,
+            weight=-0.5,
+            params={
+                "asset_cfg": ankle_mechanical_cfg,
+                "limit": math.radians(30.0),
+            },
         ),
     }
 
