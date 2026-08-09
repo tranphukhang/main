@@ -28,7 +28,8 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
 
     robot_cfg = SceneEntityCfg(
         "robot",
-        joint_names=(".*",),
+        joint_names=ACTUATED_JOINTS,
+        preserve_order=True,
     )
 
     # ---------------------------------------------------------
