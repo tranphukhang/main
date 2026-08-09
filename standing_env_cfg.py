@@ -106,6 +106,7 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
             func=mdp.time_out,
             time_out=True,
         ),
+        
         "bad_orientation": TerminationTermCfg(
             func=mdp.bad_orientation,
             params={
@@ -134,6 +135,17 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=-0.01,
             params={
                 "asset_cfg": robot_cfg,
+            },
+        ),
+
+        "posture": RewardTermCfg(
+            func=mdp.posture,
+            weight=1.0,
+            params={
+                "asset_cfg": robot_cfg,
+                "std": {
+                    ".*": 0.05,
+                },
             },
         ),
     }
