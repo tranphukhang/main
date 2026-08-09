@@ -1,0 +1,297 @@
+<mujoco model="robot">
+
+    <option
+        timestep="0.0005"
+        integrator="implicitfast"
+        solver="Newton"
+        cone="elliptic"
+        tolerance="1e-10">
+        
+        <flag nativeccd="disable"/>
+    </option>
+
+    <compiler
+      balanceinertia="false"
+      angle="degree"
+      eulerseq="xyz"
+      meshdir="asset\v5"
+      discardvisual="false"
+      inertiafromgeom="false"/>
+
+    <asset>
+        <material name="black_visual"
+              rgba="0.25 0.25 0.25 1"
+              specular="0.1"
+              shininess="0.1"/>
+
+        <mesh name="base" file="Base.STL"/>
+        <mesh name="pelvis_left" file="Pelvis_Left.STL"/>
+        <mesh name="thigh_1_left" file="Thigh_1_Left.STL"/>
+        <mesh name="thigh_2_left" file="Thigh_2_Left.STL"/>
+        <mesh name="ankle_1_left" file="Anlke_1_Left.STL"/>
+        <mesh name="ankle_2_left" file="Anlke_2_Left.STL"/>
+        <mesh name="ankle_3_left" file="Anlke_3_Left.STL"/>
+        <mesh name="ankle_4_left" file="Anlke_4_Left.STL"/>
+        <mesh name="calf_left" file="Calf_Left.STL"/>
+        <mesh name="feet_left" file="Feet_Left.STL"/>
+
+        <mesh name="pelvis_right" file="Pelvis_Right.STL"/>
+        <mesh name="thigh_1_right" file="Thigh_1_Right.STL"/>
+        <mesh name="thigh_2_right" file="Thigh_2_Right.STL"/>
+        <mesh name="ankle_1_right" file="Anlke_1_Right.STL"/>
+        <mesh name="ankle_2_right" file="Anlke_2_Right.STL"/>
+        <mesh name="ankle_3_right" file="Anlke_3_Right.STL"/>
+        <mesh name="ankle_4_right" file="Anlke_4_Right.STL"/>
+        <mesh name="calf_right" file="Calf_Right.STL"/>
+        <mesh name="feet_right" file="Feet_Right.STL"/>
+    </asset>
+
+    <default>
+        <geom contype="0" conaffinity="0" condim="1" solref="0.005 1"/>
+        <equality solref="0.005 1"/>
+
+        <default class="visual">
+            <geom group="2" material="black_visual"/>
+        </default>
+
+        <default class="collision">
+            <geom group="3" rgba="0.3 0.75 1.0 0.25"/>
+            <default class="collision-left">
+                <geom contype="2" conaffinity="4"/>
+            </default>
+            <default class="collision-right">
+                <geom contype="4" conaffinity="2"/>
+            </default>
+        </default>
+    </default>
+
+    <worldbody>
+        <light name="spotlight" mode="targetbody" target="base" pos="0 -1 2"/>
+        
+        <!-- Base -->
+        <body name="base" pos="0 0 0.3418" childclass="visual">
+            <camera name="track" pos="0 -3 1" zaxis="0 -1 0.5" mode="track"/>
+            <inertial pos="0 0 0.1" mass="2.0"
+                fullinertia="0.013333 0.008333 0.008333 0.0 0.0 0.0"/>
+            <geom type="mesh" mesh="base"/>
+            <geom type="box" pos="0.0 0.0 0.1" size="0.05 0.1 0.1" class="collision"/>
+            <freejoint/>
+            <site name="imu" size="0.001"/>
+
+        <!-- Left Leg -->
+            <!-- Pelvis Left -->
+            <body name="pelvis_left" pos="0.055 0.0715 -0.07" childclass="visual">
+                <inertial pos="0.012326 0.0 0.010400" mass="0.385536"
+                    fullinertia="0.000360 0.000475 0.000284 0.0 0.000154 0.0"/>
+                <geom type="mesh" mesh="pelvis_left"/>
+                <geom type="capsule" fromto="0.046 0.0 0.0 -0.008 0.0 0.0" size="0.0285" class="collision-left"/>
+            
+                <!-- Thigh 1 Left -->
+                <body name="thigh_1_left" pos="-0.04912 0 0" childclass="visual">
+                    <inertial pos="0.000476 -0.002984 0.0" mass="0.422706"
+                        fullinertia="0.000209 0.000306 0.000218 -0.000001 0.0 0.0"/>
+                    <geom type="mesh" mesh="thigh_1_left"/>
+                    <joint name="hip_roll_left" type="hinge" axis="1 0 0" range="-30 30" damping="0.01" actuatorfrcrange="-14 14"/>
+
+                    <!-- Thigh 2 Left -->
+                    <body name="thigh_2_left" pos="0 0.01919 0" childclass="visual">
+                        <inertial pos="-0.037011 0.022153 -0.037058" mass="1.142395"
+                            fullinertia="0.003431 0.003003 0.003446 -0.000943 -0.001109 -0.000943"/>
+                        <geom type="mesh" mesh="thigh_2_left"/>
+                        <geom type="capsule" fromto="0.0 -0.028 0.0 0.0 0.054 0.0" size="0.03925" class="collision-left"/>
+                        <geom type="capsule" fromto="0.0 0.1 0.0 0.0 0.054 0.0" size="0.0285" class="collision-left"/>
+                        <geom type="capsule" fromto="0.0 0.027 0.0 -0.05904 0.027 -0.05904" size="0.03925" class="collision-left"/>
+                        <geom type="capsule" fromto="-0.05904 -0.028 -0.05904 -0.05904 0.0 -0.05904" size="0.03925" class="collision-left"/>
+                        <geom type="capsule" fromto="-0.0868 0.027 -0.0868 -0.1017 0.027 -0.1017" size="0.027" class="collision-left"/>
+                        <joint name="hip_pitch_left" type="hinge" axis="0 1 0" range="-45 45" damping="0.01" actuatorfrcrange="-17 17"/>
+
+                        <!-- Ankle 1 Left -->
+                        <body name="ankle_1_left" pos="0 0.0476 0" childclass="visual">
+                            <inertial pos="-0.016778 -0.006277 0.016778" mass="0.020857"
+                                fullinertia="0.000007 0.000012 0.000007 -0.000002 0.000005 0.000002"/>
+                            <geom type="mesh" mesh="ankle_1_left"/>
+                            <joint name="ankle_pitch_left" type="hinge" axis="0 1 0" range="-30 30" damping="0.01" actuatorfrcrange="-14 14"/>
+
+                            <!-- Ankle 2 Left -->
+                            <body name="ankle_2_left" pos="-0.03536 -0.0241 0.03536" childclass="visual">
+                                <inertial pos="-0.056038 0.003500 -0.056038" mass="0.02184914"
+                                    fullinertia="0.000066 0.000131 0.000066 0.0 -0.000063 0.0"/>
+                                <geom type="mesh" mesh="ankle_2_left"/>
+                                <joint name="ankle_passive_1_left" type="hinge" axis="0 1 0" damping="0.01"/>
+                                <site name="linkage_1a_left" pos="-0.11208 0.0035 -0.11208" size="0.001"/>
+                            </body>
+                        </body>
+
+                        <!-- Ankle 3 Left -->
+                        <body name="ankle_3_left" pos="-0.11208 0.057 -0.11208" childclass="visual">
+                            <inertial pos="-0.022094 -0.029625 0.006820" mass="0.041838"
+                                fullinertia="0.000058 0.000025 0.000045 -0.000001 0.000005 0.0"/>
+                            <geom type="mesh" mesh="ankle_3_left"/>
+                            <joint name="ankle_passive_2_left" type="hinge" axis="0 1 0" damping="0.01"/>
+                            <site name="linkage_1b_left" pos="-0.03536 -0.03 0.03536" size="0.001"/>
+
+                            <!-- Ankle 4 Left -->
+                            <body name="ankle_4_left" pos="-0.02121 -0.0335 -0.02121" childclass="visual">
+                                <inertial pos="0.05603821 0.00350000 -0.05603821" mass="0.02184914"
+                                    fullinertia="0.00002337 0.00004656 0.00002337 -0.00000005 0.00002253 0.00000005"/>
+                                <geom type="mesh" mesh="ankle_4_left"/>
+                                <joint name="ankle_passive_3_left" type="hinge" axis="0 1 0" damping="0.01"/>
+                                <site name="linkage_2a_left" pos="0.11208 0.0035 -0.11208" size="0.001"/>
+                            </body>
+                        </body>
+
+                        <!-- Calf Left -->
+                        <body name="calf_left" pos="-0.11208 0.0395 -0.11208" childclass="visual">
+                            <inertial pos="0.052942 -0.012698 -0.052849" mass="0.151862"
+                                fullinertia="0.000247 0.000425 0.000246 -0.000002 0.000206 0.000002"/>
+                            <geom type="mesh" mesh="calf_left"/>
+                            <geom type="capsule" fromto="0.0 -0.0125 0.0 0.11208 -0.0125 -0.11208" size="0.0185" class="collision-left"/>
+                            <joint name="calf_pitch_left" type="hinge" axis="0 1 0" range="-30 30" damping="0.01" actuatorfrcrange="-25.5 25.5"/>
+
+                            <!-- Feet Left -->
+                            <body name="feet_left" pos="0.11208 0.0075 -0.11208" childclass="visual">
+                                <inertial pos="0.009935 -0.019749 -0.025418" mass="0.072179"
+                                    fullinertia="0.000053 0.000081 0.000104 0.0 0.000005 -0.000001"/>
+                                <geom type="mesh" mesh="feet_left"/>
+                                <geom type="capsule" fromto="-0.02054 -0.02 -0.02054 0.05187 -0.02 -0.02054" size="0.027" class="collision-left"/>
+                                <geom type="capsule" fromto="0.07 0.007 -0.03854 0.07 -0.047 -0.03854" size="0.009" class="collision-left"/>
+                                <geom type="capsule" fromto="-0.03854 0.007 -0.03854 -0.03854 -0.047 -0.03854" size="0.009" class="collision-left"/>
+                                <joint name="ankle_pitch_passive_4_left" type="hinge" axis="0 1 0" range="-30 30" damping="0.01"/>
+                                <site name="linkage_2b_left" pos="-0.02121 -0.02 -0.02121" size="0.001"/>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        
+        <!-- Right Leg -->
+            <!-- Pelvis Right -->
+            <body name="pelvis_right" pos="0.055 -0.0715 -0.07" childclass="visual">
+                    <inertial pos="0.012326 0.0 0.010400" mass="0.385536"
+                        fullinertia="0.000360 0.000475 0.000284 0.0 0.000154 0.0"/>
+                    <geom type="mesh" mesh="pelvis_right"/>
+                    <geom type="capsule" fromto="0.046 0.0 0.0 -0.008 0.0 0.0" size="0.0285" class="collision-right"/>
+
+                <!-- Thigh 1 Right -->
+                <body name="thigh_1_right" pos="-0.04912 0 0" childclass="visual">
+                    <inertial pos="0.000476 0.002984 0.0" mass="0.422706"
+                        fullinertia="0.000209 0.000306 0.000218 0.000001 0.0 0.0"/>
+                    <geom type="mesh" mesh="thigh_1_right"/>
+                    <joint name="hip_roll_right" type="hinge" axis="-1 0 0" range="-30 30" damping="0.01" actuatorfrcrange="-14 14"/>
+
+                    <!-- Thigh 2 Right -->
+                    <body name="thigh_2_right" pos="0 -0.01919 0" childclass="visual">
+                        <inertial pos="-0.037011 -0.022153 -0.037058" mass="1.142395"
+                            fullinertia="0.003431 0.003003 0.003446 0.000943 -0.001109 0.000943"/>
+                        <geom type="mesh" mesh="thigh_2_right"/>
+                        <geom type="capsule" fromto="0.0 0.028 0.0 0.0 -0.054 0.0" size="0.03925" class="collision-right"/>
+                        <geom type="capsule" fromto="0.0 -0.1 0.0 0.0 -0.054 0.0" size="0.0285" class="collision-right"/>
+                        <geom type="capsule" fromto="0.0 -0.027 0.0 -0.05904 -0.027 -0.05904" size="0.03925" class="collision-right"/>
+                        <geom type="capsule" fromto="-0.05904 0.028 -0.05904 -0.05904 0.0 -0.05904" size="0.03925" class="collision-right"/>
+                        <geom type="capsule" fromto="-0.0868 -0.027 -0.0868 -0.1017 -0.027 -0.1017" size="0.027" class="collision-right"/>
+                        <joint name="hip_pitch_right" type="hinge" axis="0 1 0" range="-45 45" damping="0.01" actuatorfrcrange="-17 17"/>
+
+                        <!-- Ankle 1 Right -->
+                        <body name="ankle_1_right" pos="0 -0.0476 0" childclass="visual">
+                            <inertial pos="-0.016778 0.006277 0.016778" mass="0.020857"
+                                fullinertia="0.000007 0.000012 0.000007 0.000002 0.000005 -0.000002"/>
+                            <geom type="mesh" mesh="ankle_1_right"/>
+                            <joint name="ankle_pitch_right" type="hinge" axis="0 1 0" range="-30 30" damping="0.01" actuatorfrcrange="-14 14"/>
+
+                            <!-- Ankle 2 Right -->
+                            <body name="ankle_2_right" pos="-0.03536 0.0241 0.03536" childclass="visual">
+                                <inertial pos="-0.056038 -0.003500 -0.056038" mass="0.02184914"
+                                    fullinertia="0.000066 0.000131 0.000066 0.0 -0.000063 0.0"/>
+                                <geom type="mesh" mesh="ankle_2_right"/>
+                                <joint name="ankle_passive_1_right" type="hinge" axis="0 1 0" damping="0.01"/>
+                                <site name="linkage_1a_right" pos="-0.11208 -0.0035 -0.11208" size="0.001"/>
+                            </body>
+                        </body>
+
+                        <!-- Ankle 3 Right -->
+                        <body name="ankle_3_right" pos="-0.11208 -0.057 -0.11208" childclass="visual">
+                            <inertial pos="-0.022094 0.029625 0.006820" mass="0.041838"
+                                fullinertia="0.000058 0.000025 0.000045 0.000001 0.000005 0.0"/>
+                            <geom type="mesh" mesh="ankle_3_right"/>
+                            <joint name="ankle_passive_2_right" type="hinge" axis="0 1 0" damping="0.01"/>
+                            <site name="linkage_1b_right" pos="-0.03536 0.03 0.03536" size="0.001"/>
+
+                            <!-- Ankle 4 Right -->
+                            <body name="ankle_4_right" pos="-0.02121 0.0335 -0.02121" childclass="visual">
+                                <inertial pos="0.05603821 -0.00350000 -0.05603821" mass="0.02184914"
+                                    fullinertia="0.00002337 0.00004656 0.00002337 0.00000005 0.00002253 -0.00000005"/>
+                                <geom type="mesh" mesh="ankle_4_right"/>
+                                <joint name="ankle_passive_3_right" type="hinge" axis="0 1 0" damping="0.01"/>
+                                <site name="linkage_2a_right" pos="0.11208 0.0035 -0.11208" size="0.001"/>
+                            </body>
+                        </body>
+
+                        <!-- Calf Right -->
+                        <body name="calf_right" pos="-0.11208 -0.0395 -0.11208" childclass="visual">
+                            <inertial pos="0.052942 0.012698 -0.052849" mass="0.151862"
+                                fullinertia="0.000247 0.000425 0.000246 0.000002 0.000206 -0.000002"/>
+                            <geom type="mesh" mesh="calf_right"/>
+                            <geom type="capsule" fromto="0.0 0.0125 0.0 0.11208 0.0125 -0.11208" size="0.0185" class="collision-right"/>
+                            <joint name="calf_pitch_right" type="hinge" axis="0 1 0" range="-30 30" damping="0.01" actuatorfrcrange="-25.5 25.5"/>
+
+                            <!-- Feet Right -->
+                            <body name="feet_right" pos="0.11208 -0.0075 -0.11208" childclass="visual">
+                                <inertial pos="0.009935 0.019749 -0.025418" mass="0.072179"
+                                    fullinertia="0.000053 0.000081 0.000104 0.0 0.000005 0.000001"/>
+                                <geom type="mesh" mesh="feet_right"/>
+                                <geom type="capsule" fromto="-0.02054 0.02 -0.02054 0.05187 0.02 -0.02054" size="0.027" class="collision-right"/>
+                                <geom type="capsule" fromto="0.07 -0.007 -0.03854 0.07 0.047 -0.03854" size="0.009" class="collision-right"/>
+                                <geom type="capsule" fromto="-0.03854 -0.007 -0.03854 -0.03854 0.047 -0.03854" size="0.009" class="collision-right"/>
+                                <joint name="ankle_pitch_passive_4_right" type="hinge" axis="0 1 0" range="-30 30" damping="0.01"/>
+                                <site name="linkage_2b_right" pos="-0.02121 0.02 -0.02121" size="0.001"/>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+    </worldbody>
+
+    <equality>
+        <connect name="linkage_1_left" site1="linkage_1a_left" site2="linkage_1b_left"/>
+        <connect name="linkage_2_left" site1="linkage_2a_left" site2="linkage_2b_left"/>
+
+        <connect name="linkage_1_right" site1="linkage_1a_right" site2="linkage_1b_right"/>
+        <connect name="linkage_2_right" site1="linkage_2a_right" site2="linkage_2b_right"/>
+    </equality>
+
+    <actuator>
+        <position name="hip_roll_left_motor_00" joint="hip_roll_left" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="hip_pitch_left_motor_02" joint="hip_pitch_left" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="calf_pitch_left_motor_02" joint="calf_pitch_left" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="ankle_pitch_left_motor_00" joint="ankle_pitch_left" kp="100" kv="1.5" inheritrange="1"/>
+
+        <position name="hip_roll_right_motor_00" joint="hip_roll_right" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="hip_pitch_right_motor_02" joint="hip_pitch_right" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="calf_pitch_right_motor_02" joint="calf_pitch_right" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="ankle_pitch_right_motor_00" joint="ankle_pitch_right" kp="100" kv="1.5" inheritrange="1"/>
+    </actuator>
+
+    <sensor>
+        <jointactuatorfrc name="hip_roll_left_joint" joint="hip_roll_left"/>
+        <jointactuatorfrc name="hip_pitch_left_joint" joint="hip_pitch_left"/>
+        <jointactuatorfrc name="calf_pitch_left_joint" joint="calf_pitch_left"/>
+        <jointactuatorfrc name="ankle_pitch_left_joint" joint="ankle_pitch_left"/>
+
+        <jointactuatorfrc name="hip_roll_right_joint" joint="hip_roll_right"/>
+        <jointactuatorfrc name="hip_pitch_right_joint" joint="hip_pitch_right"/>
+        <jointactuatorfrc name="calf_pitch_right_joint" joint="calf_pitch_right"/>
+        <jointactuatorfrc name="ankle_pitch_right_joint" joint="ankle_pitch_right"/>
+
+        <actuatorfrc name="hip_roll_left_motor_00" actuator="hip_roll_left_motor_00"/>
+        <actuatorfrc name="hip_pitch_left_motor_02" actuator="hip_pitch_left_motor_02"/>
+        <actuatorfrc name="calf_pitch_left_motor_02" actuator="calf_pitch_left_motor_02"/>
+        <actuatorfrc name="ankle_pitch_left_motor_00" actuator="ankle_pitch_left_motor_00"/>
+
+        <actuatorfrc name="hip_roll_right_motor_00" actuator="hip_roll_right_motor_00"/>
+        <actuatorfrc name="hip_pitch_right_motor_02" actuator="hip_pitch_right_motor_02"/>
+        <actuatorfrc name="calf_pitch_right_motor_02" actuator="calf_pitch_right_motor_02"/>
+        <actuatorfrc name="ankle_pitch_right_motor_00" actuator="ankle_pitch_right_motor_00"/>
+    </sensor>
+
+</mujoco>
