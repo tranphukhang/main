@@ -25,6 +25,17 @@ from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 from rewards import ankle_mechanical_limit_penalty
 
 
+class StandingBodyImpulse(mdp.apply_body_impulse):
+    def __init__(self, cfg, env):
+        super().__init__(cfg, env)
+
+        self._viz_cfg = mdp.apply_body_impulse.VizCfg(
+            rgba=(0.9, 0.2, 0.8, 0.9),
+            scale=0.02,
+            width=0.02,
+            min_force=1.0,
+        )
+
 def standing_env_cfg() -> ManagerBasedRlEnvCfg:
 
     # ---------------------------------------------------------
@@ -145,7 +156,7 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
 
         "body_impulse": EventTermCfg(
-            func=mdp.apply_body_impulse,
+            func=StandingBodyImpulse,
             mode="step",
             params={
                 "force_range": (-15.0, 15.0),
