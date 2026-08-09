@@ -148,7 +148,7 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
             func=mdp.apply_body_impulse,
             mode="step",
             params={
-                "force_range": (-10.0, 10.0),
+                "force_range": (-15.0, 15.0),
                 "torque_range": (0.0, 0.0),
                 "duration_s": (0.5, 0.5),
                 "cooldown_s": (2.0, 4.0),

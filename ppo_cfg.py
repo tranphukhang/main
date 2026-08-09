@@ -50,7 +50,7 @@ def standing_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
             num_learning_epochs=5,
             num_mini_batches=4,
 
-            learning_rate=1.0e-3,
+            learning_rate=1.0e-4,
             schedule="adaptive",
 
             gamma=0.99,
@@ -66,12 +66,17 @@ def standing_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         # -----------------------------------------------------
 
         experiment_name="standing_v1",
+        run_name = "push_v2",
+
+        resume=True,
+        load_run="2026-08-08_21-30-10",
+        load_checkpoint="model_100.pt",
 
         num_steps_per_env=24,
 
         save_interval=50,
 
-        max_iterations=3000,
+        max_iterations=500,
 
         # Giới hạn raw policy action trong [-1, 1].
         clip_actions=1.0,
