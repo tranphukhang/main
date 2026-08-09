@@ -12,6 +12,7 @@ from mjlab.managers.observation_manager import (
 from mjlab.managers.reward_manager import RewardTermCfg
 from mjlab.managers.scene_entity_config import SceneEntityCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
+from mjlab.managers.event_manager import EventTermCfg
 
 from mjlab.scene import SceneCfg
 from mjlab.sim import MujocoCfg, SimulationCfg
@@ -45,6 +46,11 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
             "calf_pitch_right",
         ),
         preserve_order=True,
+    )
+
+    base_body_cfg = SceneEntityCfg(
+        "robot",
+        body_names=("base",),
     )
 
     # ---------------------------------------------------------
@@ -124,6 +130,29 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
             func=mdp.bad_orientation,
             params={
                 "limit_angle": math.radians(60.0),
+            },
+        ),
+    }
+
+    # ---------------------------------------------------------
+    # Events
+    # ---------------------------------------------------------
+
+    events = {
+        "reset_scene_to_default": EventTermCfg(
+            func=mdp.reset_scene_to_default,
+            mode="reset",
+        ),
+
+        "body_impulse": EventTermCfg(
+            func=mdp.apply_body_impulse,
+            mode="step",
+            params={
+                "force_range": (-10.0, 10.0),
+                "torque_range": (0.0, 0.0),
+                "duration_s": (0.10, 0.15),
+                "cooldown_s": (2.0, 4.0),
+                "asset_cfg": base_body_cfg,
             },
         ),
     }
@@ -212,15 +241,10 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
 
         observations=observations,
-
         actions=actions,
-
         rewards=rewards,
-
         terminations=terminations,
-
-        # ManagerBasedRlEnvCfg mặc định đã có reset_scene_to_default cho event.
-        # chưa có randomization.
+        events=events,
 
         sim=SimulationCfg(
             mujoco=MujocoCfg(
