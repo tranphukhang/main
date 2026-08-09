@@ -1,10 +1,12 @@
 from pathlib import Path
 
-from mjlab.scripts.play import PlayConfig, run_play
+import mjlab.scripts.play as play_script
+from mjlab.scripts.play import PlayConfig
 from mjlab.tasks.registry import register_mjlab_task
 
 from standing_env_cfg import standing_env_cfg
 from ppo_cfg import standing_ppo_runner_cfg
+from standing_viewer import StandingViserViewer
 
 
 TASK_ID = "Mjlab-Standing-Flat-Custom"
@@ -56,7 +58,10 @@ def main():
         viewer="viser",
     )
 
-    run_play(
+    # Dùng custom Viser viewer nhưng vẫn giữ nguyên toàn bộ checkpoint loading của mjlab.
+    play_script.ViserPlayViewer = StandingViserViewer
+
+    play_script.run_play(
         TASK_ID,
         play_cfg,
     )
