@@ -118,7 +118,25 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
     # Rewards
     # ---------------------------------------------------------
 
-    rewards: dict[str, RewardTermCfg] = {}
+    rewards: dict[str, RewardTermCfg] = {
+        "alive": RewardTermCfg(
+            func=mdp.is_alive,
+            weight=1.0,
+        ),
+
+        "orientation": RewardTermCfg(
+            func=mdp.flat_orientation_l2,
+            weight=-1.0,
+        ),
+
+        "joint_velocity": RewardTermCfg(
+            func=mdp.joint_vel_l2,
+            weight=-0.01,
+            params={
+                "asset_cfg": robot_cfg,
+            },
+        ),
+    }
 
     # ---------------------------------------------------------
     # Terrain
