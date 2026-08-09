@@ -1,3 +1,5 @@
+import math
+
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs import mdp
 from mjlab.envs.mdp.actions import JointPositionActionCfg
@@ -99,11 +101,16 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
     # Termination
     # ---------------------------------------------------------
 
-    # Timeout.
     terminations = {
         "time_out": TerminationTermCfg(
             func=mdp.time_out,
             time_out=True,
+        ),
+        "bad_orientation": TerminationTermCfg(
+            func=mdp.bad_orientation,
+            params={
+                "limit_angle": math.radians(60.0),
+            },
         ),
     }
 
