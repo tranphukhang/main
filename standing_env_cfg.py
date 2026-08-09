@@ -150,7 +150,7 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
             params={
                 "force_range": (-10.0, 10.0),
                 "torque_range": (0.0, 0.0),
-                "duration_s": (0.10, 0.15),
+                "duration_s": (0.5, 0.5),
                 "cooldown_s": (2.0, 4.0),
                 "asset_cfg": base_body_cfg,
             },
