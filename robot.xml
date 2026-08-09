@@ -24,6 +24,11 @@
               specular="0.1"
               shininess="0.1"/>
 
+        <material name="base_transparent"
+            rgba="0.25 0.25 0.25 0.2"
+            specular="0.1"
+            shininess="0.1"/>
+
         <mesh name="base" file="Base.STL"/>
         <mesh name="pelvis_left" file="Pelvis_Left.STL"/>
         <mesh name="thigh_1_left" file="Thigh_1_Left.STL"/>
@@ -73,7 +78,7 @@
             <camera name="track" pos="0 -3 1" zaxis="0 -1 0.5" mode="track"/>
             <inertial pos="0 0 0.1" mass="2.0"
                 fullinertia="0.013333 0.008333 0.008333 0.0 0.0 0.0"/>
-            <geom type="mesh" mesh="base"/>
+            <geom type="mesh" mesh="base" material="base_transparent"/>
             <geom type="box" pos="0.0 0.0 0.1" size="0.05 0.1 0.1" class="collision"/>
             <freejoint/>
             <site name="imu" size="0.001"/>
