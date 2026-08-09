@@ -19,11 +19,8 @@ def main():
     # ---------------------------------------------------------
 
     checkpoints = list(
-        Path("logs/rsl_rl/standing_v1").glob("*/model_100.pt")
+        Path("logs/rsl_rl/standing_v1").glob("*/model_599.pt")
     )
-
-    if not checkpoints:
-        raise FileNotFoundError("Không tìm thấy model_100.pt")
 
     # Nếu có nhiều run, lấy model_100.pt của run mới nhất.
     checkpoint = max(
@@ -41,6 +38,7 @@ def main():
 
     play_env_cfg = standing_env_cfg()
     play_env_cfg.scene.num_envs = 1
+    play_env_cfg.episode_length_s = 30.0
 
     register_mjlab_task(
         task_id=TASK_ID,
