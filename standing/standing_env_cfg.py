@@ -22,7 +22,7 @@ from mjlab.viewer import ViewerConfig
 
 from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 
-from rewards import ankle_mechanical_limit_penalty
+from standing.rewards import ankle_mechanical_limit_penalty
 
 
 class StandingBodyImpulse(mdp.apply_body_impulse):

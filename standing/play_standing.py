@@ -4,9 +4,9 @@ import mjlab.scripts.play as play_script
 from mjlab.scripts.play import PlayConfig
 from mjlab.tasks.registry import register_mjlab_task
 
-from standing_env_cfg import standing_env_cfg
-from ppo_cfg import standing_ppo_runner_cfg
-from standing_viewer import StandingViserViewer
+from standing.standing_env_cfg import standing_env_cfg
+from standing.ppo_cfg import standing_ppo_runner_cfg
+from standing.standing_viewer import StandingViserViewer
 
 
 TASK_ID = "Mjlab-Standing-Flat-Custom"
