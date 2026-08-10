@@ -3,6 +3,7 @@ import math
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs import mdp
 from mjlab.envs.mdp.actions import JointPositionActionCfg
+from mjlab.tasks.velocity.mdp import UniformVelocityCommandCfg
 
 from mjlab.managers.action_manager import ActionTermCfg
 from mjlab.managers.observation_manager import (
@@ -13,6 +14,7 @@ from mjlab.managers.reward_manager import RewardTermCfg
 from mjlab.managers.scene_entity_config import SceneEntityCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
 from mjlab.managers.event_manager import EventTermCfg
+from mjlab.managers.command_manager import CommandTermCfg
 
 from mjlab.scene import SceneCfg
 from mjlab.sim import MujocoCfg, SimulationCfg
@@ -124,6 +126,33 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             actuator_names=ACTUATED_JOINTS,
             scale=0.5,
             use_default_offset=True,
+        ),
+    }
+
+    # ---------------------------------------------------------
+    # Commands
+    # ---------------------------------------------------------
+
+    commands: dict[str, CommandTermCfg] = {
+        "twist": UniformVelocityCommandCfg(
+            entity_name="robot",
+
+            resampling_time_range=(3.0, 5.0),
+
+            rel_standing_envs=0.1,
+            rel_heading_envs=0.0,
+            rel_world_envs=0.0,
+            rel_forward_envs=0.0,
+
+            heading_command=False,
+
+            debug_vis=True,
+
+            ranges=UniformVelocityCommandCfg.Ranges(
+                lin_vel_x=(-0.15, 0.15),
+                lin_vel_y=(0.0, 0.0),
+                ang_vel_z=(0.0, 0.0),
+            ),
         ),
     }
 
@@ -254,6 +283,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
         observations=observations,
         actions=actions,
+        commands=commands,
         rewards=rewards,
         terminations=terminations,
         events=events,
