@@ -3,7 +3,10 @@ import math
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs import mdp
 from mjlab.envs.mdp.actions import JointPositionActionCfg
-from mjlab.tasks.velocity.mdp import UniformVelocityCommandCfg
+from mjlab.tasks.velocity.mdp import (
+    UniformVelocityCommandCfg,
+    track_linear_velocity,
+)
 
 from mjlab.managers.action_manager import ActionTermCfg
 from mjlab.managers.observation_manager import (
@@ -209,6 +212,15 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     # ---------------------------------------------------------
 
     rewards: dict[str, RewardTermCfg] = {
+        "track_linear_velocity": RewardTermCfg(
+            func=track_linear_velocity,
+            weight=2.0,
+            params={
+                "command_name": "twist",
+                "std": 0.10,
+            },
+        ),
+
         "alive": RewardTermCfg(
             func=mdp.is_alive,
             weight=1.0,
