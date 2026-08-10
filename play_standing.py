@@ -37,8 +37,9 @@ def main():
     train_env_cfg = standing_env_cfg()
 
     play_env_cfg = standing_env_cfg()
-    play_env_cfg.scene.num_envs = 1
+    play_env_cfg.scene.num_envs = 3
     play_env_cfg.episode_length_s = 30.0
+    play_env_cfg.events["body_impulse"].params["cooldown_s"] = (2.0, 2.0)
 
     register_mjlab_task(
         task_id=TASK_ID,

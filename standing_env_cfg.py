@@ -249,6 +249,7 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
                 "robot": ROBOT_CFG,
             },
             num_envs=1,
+            env_spacing=0.5,
         ),
 
         observations=observations,
