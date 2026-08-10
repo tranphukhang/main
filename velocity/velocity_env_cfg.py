@@ -6,6 +6,7 @@ from mjlab.envs.mdp.actions import JointPositionActionCfg
 from mjlab.tasks.velocity.mdp import (
     UniformVelocityCommandCfg,
     track_linear_velocity,
+    variable_posture,
 )
 
 from mjlab.managers.action_manager import ActionTermCfg
@@ -240,13 +241,26 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
 
         "posture": RewardTermCfg(
-            func=mdp.posture,
+            func=variable_posture,
             weight=1.0,
             params={
                 "asset_cfg": robot_cfg,
-                "std": {
+                "command_name": "twist",
+
+                "std_standing": {
                     ".*": 0.05,
                 },
+
+                "std_walking": {
+                    ".*": 0.30,
+                },
+
+                "std_running": {
+                    ".*": 0.30,
+                },
+
+                "walking_threshold": 0.05,
+                "running_threshold": 1.5,
             },
         ),
 
