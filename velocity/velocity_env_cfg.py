@@ -100,6 +100,13 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         "actions": ObservationTermCfg(
             func=mdp.last_action,
         ),
+
+        "command": ObservationTermCfg(
+            func=mdp.generated_commands,
+            params={
+                "command_name": "twist",
+            },
+        ),
     }
 
     observations = {
