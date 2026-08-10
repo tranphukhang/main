@@ -31,17 +31,6 @@ from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 from standing.rewards import ankle_mechanical_limit_penalty
 
 
-class StandingBodyImpulse(mdp.apply_body_impulse):
-    def __init__(self, cfg, env):
-        super().__init__(cfg, env)
-
-        self._viz_cfg = mdp.apply_body_impulse.VizCfg(
-            rgba=(0.9, 0.2, 0.8, 0.9),
-            scale=0.02,
-            width=0.02,
-            min_force=1.0,
-        )
-
 def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
     # ---------------------------------------------------------
@@ -65,10 +54,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         preserve_order=True,
     )
 
-    base_body_cfg = SceneEntityCfg(
-        "robot",
-        body_names=("base",),
-    )
 
     # ---------------------------------------------------------
     # Observations
@@ -193,18 +178,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         "reset_scene_to_default": EventTermCfg(
             func=mdp.reset_scene_to_default,
             mode="reset",
-        ),
-
-        "body_impulse": EventTermCfg(
-            func=StandingBodyImpulse,
-            mode="step",
-            params={
-                "force_range": (-15.0, 15.0),
-                "torque_range": (0.0, 0.0),
-                "duration_s": (0.5, 0.5),
-                "cooldown_s": (2.0, 4.0),
-                "asset_cfg": base_body_cfg,
-            },
         ),
     }
 
