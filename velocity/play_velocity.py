@@ -36,8 +36,9 @@ def main():
     train_env_cfg = velocity_env_cfg()
 
     play_env_cfg = velocity_env_cfg()
-    play_env_cfg.scene.num_envs = 3
+    play_env_cfg.scene.num_envs = 1
     play_env_cfg.episode_length_s = 30.0
+    play_env_cfg.commands["twist"].ranges.lin_vel_x = (-0.15, -0.15)
 
     register_mjlab_task(
         task_id=TASK_ID,
@@ -52,7 +53,7 @@ def main():
 
     play_cfg = PlayConfig(
         checkpoint_file=str(checkpoint),
-        viewer="viser",
+        viewer="native",
     )
 
     play_script.run_play(

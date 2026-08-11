@@ -16,3 +16,33 @@ tolerance: parent has 1e-08 (default), child has 1e-10, keeping parent value
 integrator: parent has 0 (default), child has 3, keeping parent value
 cone: parent has 0 (default), child has 1, keeping parent value
 
+WARNING Tue Aug 11 09:47:09 2026: Attach conflict when attaching 'robot' to 'mjlab scene', policy is 'warning'
+timestep: parent has 0.002 (default), child has 0.0005, keeping parent value
+tolerance: parent has 1e-08 (default), child has 1e-10, keeping parent value
+integrator: parent has 0 (default), child has 3, keeping parent value
+cone: parent has 0 (default), child has 1, keeping parent value
+
+WARNING Tue Aug 11 09:49:03 2026: Attach conflict when attaching 'robot' to 'mjlab scene', policy is 'warning'
+timestep: parent has 0.002 (default), child has 0.0005, keeping parent value
+tolerance: parent has 1e-08 (default), child has 1e-10, keeping parent value
+integrator: parent has 0 (default), child has 3, keeping parent value
+cone: parent has 0 (default), child has 1, keeping parent value
+
+WARNING Tue Aug 11 09:53:33 2026: Attach conflict when attaching 'robot' to 'mjlab scene', policy is 'warning'
+timestep: parent has 0.002 (default), child has 0.0005, keeping parent value
+tolerance: parent has 1e-08 (default), child has 1e-10, keeping parent value
+integrator: parent has 0 (default), child has 3, keeping parent value
+cone: parent has 0 (default), child has 1, keeping parent value
+
+WARNING Tue Aug 11 09:54:05 2026: Attach conflict when attaching 'robot' to 'mjlab scene', policy is 'warning'
+timestep: parent has 0.002 (default), child has 0.0005, keeping parent value
+tolerance: parent has 1e-08 (default), child has 1e-10, keeping parent value
+integrator: parent has 0 (default), child has 3, keeping parent value
+cone: parent has 0 (default), child has 1, keeping parent value
+
+WARNING Tue Aug 11 09:54:41 2026: Attach conflict when attaching 'robot' to 'mjlab scene', policy is 'warning'
+timestep: parent has 0.002 (default), child has 0.0005, keeping parent value
+tolerance: parent has 1e-08 (default), child has 1e-10, keeping parent value
+integrator: parent has 0 (default), child has 3, keeping parent value
+cone: parent has 0 (default), child has 1, keeping parent value
+
