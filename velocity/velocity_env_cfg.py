@@ -6,6 +6,7 @@ from mjlab.envs.mdp.actions import JointPositionActionCfg
 from mjlab.tasks.velocity.mdp import (
     UniformVelocityCommandCfg,
     track_linear_velocity,
+    track_angular_velocity,
     variable_posture,
 )
 
@@ -192,6 +193,15 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             params={
                 "command_name": "twist",
                 "std": 0.10,
+            },
+        ),
+
+        "track_angular_velocity": RewardTermCfg(
+            func=track_angular_velocity,
+            weight=0.5,
+            params={
+                "command_name": "twist",
+                "std": 0.5,
             },
         ),
 
