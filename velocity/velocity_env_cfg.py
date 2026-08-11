@@ -195,11 +195,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             },
         ),
 
-        "alive": RewardTermCfg(
-            func=mdp.is_alive,
-            weight=1.0,
-        ),
-
         "orientation": RewardTermCfg(
             func=mdp.flat_orientation_l2,
             weight=-1.0,
