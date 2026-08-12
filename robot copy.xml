@@ -265,6 +265,18 @@
         <connect name="linkage_2_right" site1="linkage_2a_right" site2="linkage_2b_right"/>
     </equality>
 
+    <actuator>
+        <position name="hip_roll_left_motor_00" joint="hip_roll_left" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="hip_pitch_left_motor_02" joint="hip_pitch_left" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="calf_pitch_left_motor_02" joint="calf_pitch_left" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="ankle_pitch_left_motor_00" joint="ankle_pitch_left" kp="100" kv="1.5" inheritrange="1"/>
+
+        <position name="hip_roll_right_motor_00" joint="hip_roll_right" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="hip_pitch_right_motor_02" joint="hip_pitch_right" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="calf_pitch_right_motor_02" joint="calf_pitch_right" kp="100" kv="1.5" inheritrange="1"/>
+        <position name="ankle_pitch_right_motor_00" joint="ankle_pitch_right" kp="100" kv="1.5" inheritrange="1"/>
+    </actuator>
+
     <sensor>
         <jointactuatorfrc name="hip_roll_left_joint" joint="hip_roll_left"/>
         <jointactuatorfrc name="hip_pitch_left_joint" joint="hip_pitch_left"/>
@@ -275,6 +287,16 @@
         <jointactuatorfrc name="hip_pitch_right_joint" joint="hip_pitch_right"/>
         <jointactuatorfrc name="calf_pitch_right_joint" joint="calf_pitch_right"/>
         <jointactuatorfrc name="ankle_pitch_right_joint" joint="ankle_pitch_right"/>
+
+        <actuatorfrc name="hip_roll_left_motor_00" actuator="hip_roll_left_motor_00"/>
+        <actuatorfrc name="hip_pitch_left_motor_02" actuator="hip_pitch_left_motor_02"/>
+        <actuatorfrc name="calf_pitch_left_motor_02" actuator="calf_pitch_left_motor_02"/>
+        <actuatorfrc name="ankle_pitch_left_motor_00" actuator="ankle_pitch_left_motor_00"/>
+
+        <actuatorfrc name="hip_roll_right_motor_00" actuator="hip_roll_right_motor_00"/>
+        <actuatorfrc name="hip_pitch_right_motor_02" actuator="hip_pitch_right_motor_02"/>
+        <actuatorfrc name="calf_pitch_right_motor_02" actuator="calf_pitch_right_motor_02"/>
+        <actuatorfrc name="ankle_pitch_right_motor_00" actuator="ankle_pitch_right_motor_00"/>
     </sensor>
 
 </mujoco>
