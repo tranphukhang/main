@@ -306,7 +306,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             func=feet_gait,
             weight=0.75,
             params={
-                "period": 1.0,
+                "period": 2.0,
 
                 # Left / Right lệch nhau nửa chu kỳ.
                 "offset": [0.0, 0.5],
@@ -324,7 +324,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             func=feet_clearance_flat,
             weight=-2.0,
             params={
-                "target_height": 0.03,
+                "target_height": 0.1,
                 "command_name": "twist",
                 "command_threshold": 0.05,
                 "asset_cfg": feet_cfg,

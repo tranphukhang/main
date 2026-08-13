@@ -18,7 +18,7 @@ def main():
     # ---------------------------------------------------------
 
     checkpoints = list(
-        Path("logs/rsl_rl/velocity_v1/2026-08-13_13-41-41_x_tracking_v4").glob("model_2700.pt")
+        Path("logs/rsl_rl/velocity_v1/2026-08-13_15-43-15_x_tracking_v2").glob("model_3149.pt")
     )
 
     # Nếu có nhiều run, lấy model_100.pt của run mới nhất.
@@ -38,7 +38,7 @@ def main():
     play_env_cfg = velocity_env_cfg()
     play_env_cfg.scene.num_envs = 1
     play_env_cfg.episode_length_s = 30.0
-    play_env_cfg.commands["twist"].ranges.lin_vel_x = (0.5, 0.5)
+    play_env_cfg.commands["twist"].ranges.lin_vel_x = (0.0, 0.35)
 
 
     register_mjlab_task(
