@@ -270,7 +270,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 },
 
                 "std_walking": {
-                    r"hip_roll_.*": 0.1,
+                    r"hip_roll_.*": 0.08,
 
                     r"hip_pitch_.*": 0.45,
 

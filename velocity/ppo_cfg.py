@@ -68,12 +68,12 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         # -----------------------------------------------------
 
         experiment_name="velocity_v1",
-        run_name = "+x_tracking_v1",
+        run_name = "+x_tracking_v2",
 
-        # resume=True,
+        resume=True,
 
-        # load_run="2026-08-13_12-11-29_x_tracking_v3",
-        # load_checkpoint="model_1998.pt",
+        load_run="2026-08-13_15-17-54_+x_tracking_v1",
+        load_checkpoint="model_150.pt",
 
         num_steps_per_env=24,
 
