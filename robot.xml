@@ -163,6 +163,10 @@
                                 <geom type="capsule" fromto="-0.03854 0.007 -0.03854 -0.03854 -0.047 -0.03854" size="0.009" class="collision-left"/>
                                 <joint name="ankle_pitch_passive_4_left" type="hinge" axis="0 1 0" range="-30 30" damping="0.01"/>
                                 <site name="linkage_2b_left" pos="-0.02121 -0.02 -0.02121" size="0.001"/>
+                                <site
+                                    name="left_foot"
+                                    pos="0.0157 -0.02 -0.04754"
+                                    size="0.003"/>
                             </body>
                         </body>
                     </body>
@@ -249,6 +253,10 @@
                                 <geom type="capsule" fromto="-0.03854 -0.007 -0.03854 -0.03854 0.047 -0.03854" size="0.009" class="collision-right"/>
                                 <joint name="ankle_pitch_passive_4_right" type="hinge" axis="0 1 0" range="-30 30" damping="0.01"/>
                                 <site name="linkage_2b_right" pos="-0.02121 0.02 -0.02121" size="0.001"/>
+                                <site
+                                    name="right_foot"
+                                    pos="0.0157 0.02 -0.04754"
+                                    size="0.003"/>
                             </body>
                         </body>
                     </body>
