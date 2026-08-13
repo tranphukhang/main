@@ -120,6 +120,14 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 "command_name": "twist",
             },
         ),
+
+        "phase": ObservationTermCfg(
+            func=gait_phase,
+            params={
+                "period": 0.5,
+                "command_name": "twist",
+            },
+        ),
     }
 
     observations = {
@@ -173,14 +181,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 lin_vel_y=(0.0, 0.0),
                 ang_vel_z=(0.0, 0.0),
             ),
-        ),
-
-        "phase": ObservationTermCfg(
-            func=gait_phase,
-            params={
-                "period": 0.5,
-                "command_name": "twist",
-            },
         ),
     }
 
