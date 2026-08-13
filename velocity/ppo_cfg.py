@@ -77,7 +77,7 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
 
         save_interval=50,
 
-        max_iterations=500,
+        max_iterations=1000,
 
         # Giới hạn raw policy action trong [-1, 1].
         clip_actions=1.0,
