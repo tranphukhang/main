@@ -26,10 +26,12 @@ from mjlab.sim import MujocoCfg, SimulationCfg
 from mjlab.terrains import TerrainEntityCfg
 from mjlab.utils.spec_config import GeomCfg
 from mjlab.viewer import ViewerConfig
+from mjlab.sensor import ContactMatch, ContactSensorCfg
 
 from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 
 from standing.rewards import ankle_mechanical_limit_penalty
+from velocity.gait import gait_phase, feet_gait
 
 
 def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
@@ -53,6 +55,27 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             "calf_pitch_right",
         ),
         preserve_order=True,
+    )
+
+    feet_ground_cfg = ContactSensorCfg(
+        name="feet_ground_contact",
+
+        primary=ContactMatch(
+            mode="subtree",
+            pattern=r"^(feet_left|feet_right)$",
+            entity="robot",
+        ),
+
+        secondary=ContactMatch(
+            mode="body",
+            pattern="terrain",
+        ),
+
+        fields=("found", "force"),
+        reduce="netforce",
+        num_slots=1,
+
+        track_air_time=True,
     )
 
 
@@ -146,10 +169,18 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             debug_vis=True,
 
             ranges=UniformVelocityCommandCfg.Ranges(
-                lin_vel_x=(-0.15, 0.15),
+                lin_vel_x=(-0.5, 0.5),
                 lin_vel_y=(0.0, 0.0),
                 ang_vel_z=(0.0, 0.0),
             ),
+        ),
+
+        "phase": ObservationTermCfg(
+            func=gait_phase,
+            params={
+                "period": 0.5,
+                "command_name": "twist",
+            },
         ),
     }
 
@@ -192,7 +223,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=2.0,
             params={
                 "command_name": "twist",
-                "std": 0.10,
+                "std": 0.20,
             },
         ),
 
@@ -212,7 +243,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "joint_velocity": RewardTermCfg(
             func=mdp.joint_vel_l2,
-            weight=-0.01,
+            weight=-0.001,
             params={
                 "asset_cfg": robot_cfg,
             },
@@ -230,7 +261,13 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 },
 
                 "std_walking": {
-                    ".*": 0.30,
+                    r"hip_roll_.*": 0.15,
+
+                    r"hip_pitch_.*": 0.45,
+
+                    r"calf_pitch_.*": 0.45,
+
+                    r"ankle_pitch_.*": 0.20,
                 },
 
                 "std_running": {
@@ -253,6 +290,24 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             params={
                 "asset_cfg": ankle_mechanical_cfg,
                 "limit": math.radians(30.0),
+            },
+        ),
+
+        "foot_gait": RewardTermCfg(
+            func=feet_gait,
+            weight=0.5,
+            params={
+                "period": 0.5,
+
+                # Left / Right lệch nhau nửa chu kỳ.
+                "offset": [0.0, 0.5],
+
+                # 56% stance → có double-support ngắn.
+                "threshold": 0.56,
+
+                "command_threshold": 0.05,
+                "command_name": "twist",
+                "sensor_name": "feet_ground_contact",
             },
         ),
     }
@@ -285,9 +340,13 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
         scene=SceneCfg(
             terrain=terrain,
+
             entities={
                 "robot": ROBOT_CFG,
             },
+
+            sensors=(feet_ground_cfg,),
+
             num_envs=1,
             env_spacing=0.5,
         ),
