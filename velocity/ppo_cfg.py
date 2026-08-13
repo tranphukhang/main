@@ -68,18 +68,18 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         # -----------------------------------------------------
 
         experiment_name="velocity_v1",
-        run_name = "x_tracking_v4",
+        run_name = "+x_tracking_v1",
 
-        resume=True,
+        # resume=True,
 
-        load_run="2026-08-13_12-11-29_x_tracking_v3",
-        load_checkpoint="model_1998.pt",
+        # load_run="2026-08-13_12-11-29_x_tracking_v3",
+        # load_checkpoint="model_1998.pt",
 
         num_steps_per_env=24,
 
         save_interval=50,
 
-        max_iterations=1000,
+        max_iterations=3000,
 
         # Giới hạn raw policy action trong [-1, 1].
         clip_actions=1.0,

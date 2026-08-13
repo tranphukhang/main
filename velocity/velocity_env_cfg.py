@@ -186,7 +186,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             debug_vis=True,
 
             ranges=UniformVelocityCommandCfg.Ranges(
-                lin_vel_x=(-0.5, 0.5),
+                lin_vel_x=(0.0, 0.35),
                 lin_vel_y=(0.0, 0.0),
                 ang_vel_z=(0.0, 0.0),
             ),
@@ -270,7 +270,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 },
 
                 "std_walking": {
-                    r"hip_roll_.*": 0.08,
+                    r"hip_roll_.*": 0.07,
 
                     r"hip_pitch_.*": 0.45,
 
@@ -304,7 +304,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "foot_gait": RewardTermCfg(
             func=feet_gait,
-            weight=0.5,
+            weight=0.75,
             params={
                 "period": 1.0,
 
@@ -322,7 +322,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "foot_clearance": RewardTermCfg(
             func=feet_clearance_flat,
-            weight=-1.0,
+            weight=-2.0,
             params={
                 "target_height": 0.03,
                 "command_name": "twist",
