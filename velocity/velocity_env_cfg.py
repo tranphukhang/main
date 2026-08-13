@@ -232,7 +232,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=2.0,
             params={
                 "command_name": "twist",
-                "std": 0.20,
+                "std": 0.30,
             },
         ),
 
@@ -241,7 +241,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=1.5,
             params={
                 "command_name": "twist",
-                "std": 0.2,
+                "std": 0.4,
             },
         ),
 
@@ -252,7 +252,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "joint_velocity": RewardTermCfg(
             func=mdp.joint_vel_l2,
-            weight=-0.003,
+            weight=-0.0005,
             params={
                 "asset_cfg": robot_cfg,
             },
@@ -270,7 +270,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 },
 
                 "std_walking": {
-                    r"hip_roll_.*": 0.07,
+                    r"hip_roll_.*": 0.1,
 
                     r"hip_pitch_.*": 0.45,
 

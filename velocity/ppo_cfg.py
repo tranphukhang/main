@@ -22,7 +22,7 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
 
             distribution_cfg={
                 "class_name": "GaussianDistribution",
-                "init_std": 1.0,
+                "init_std": 0.5,
                 "std_type": "scalar",
             },
         ),
