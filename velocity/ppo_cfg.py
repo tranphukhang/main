@@ -9,6 +9,8 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
 
     return RslRlOnPolicyRunnerCfg(
 
+        seed = 42,
+        
         # -----------------------------------------------------
         # Actor
         # -----------------------------------------------------
@@ -66,12 +68,12 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         # -----------------------------------------------------
 
         experiment_name="velocity_v1",
-        run_name = "x_tracking_v3",
+        run_name = "x_tracking_v4",
 
         resume=True,
 
-        load_run="2026-08-13_10-36-53_x_tracking_v2",
-        load_checkpoint="model_998.pt",
+        load_run="2026-08-13_12-11-29_x_tracking_v3",
+        load_checkpoint="model_1998.pt",
 
         num_steps_per_env=24,
 
