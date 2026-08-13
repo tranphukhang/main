@@ -38,7 +38,7 @@ def main():
     play_env_cfg = velocity_env_cfg()
     play_env_cfg.scene.num_envs = 1
     play_env_cfg.episode_length_s = 30.0
-    play_env_cfg.commands["twist"].ranges.lin_vel_x = (0.0, 0.35)
+    play_env_cfg.commands["twist"].ranges.lin_vel_x = (0.0, 0.2)
 
 
     register_mjlab_task(

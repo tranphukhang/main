@@ -20,6 +20,7 @@ from mjlab.managers.scene_entity_config import SceneEntityCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
 from mjlab.managers.event_manager import EventTermCfg
 from mjlab.managers.command_manager import CommandTermCfg
+from mjlab.managers.curriculum_manager import CurriculumTermCfg
 
 from mjlab.scene import SceneCfg
 from mjlab.sim import MujocoCfg, SimulationCfg
@@ -186,7 +187,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             debug_vis=True,
 
             ranges=UniformVelocityCommandCfg.Ranges(
-                lin_vel_x=(0.0, 0.35),
+                lin_vel_x=(0.05, 0.2),
                 lin_vel_y=(0.0, 0.0),
                 ang_vel_z=(0.0, 0.0),
             ),
@@ -353,6 +354,27 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     )
 
     # ---------------------------------------------------------
+    # Curriculum
+    # ---------------------------------------------------------
+
+    curriculum = {
+        "orientation_weight": CurriculumTermCfg(
+            func=mdp.reward_curriculum,
+            params={
+                "reward_name": "orientation",
+                "stages": [
+                    {"step": 0 * 24,    "weight": -0.50},
+                    {"step": 500 * 24,  "weight": -1.00},
+                    {"step": 1500 * 24, "weight": -1.50},
+                    {"step": 2500 * 24, "weight": -2.00},
+                    {"step": 3500 * 24, "weight": -3.00},
+                    {"step": 4500 * 24, "weight": -4.00},
+                ],
+            },
+        ),
+    }
+
+    # ---------------------------------------------------------
     # Environment
     # ---------------------------------------------------------
 
@@ -377,6 +399,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         rewards=rewards,
         terminations=terminations,
         events=events,
+        curriculum=curriculum,
 
         sim=SimulationCfg(
             mujoco=MujocoCfg(
