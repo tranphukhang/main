@@ -18,7 +18,7 @@ def main():
     # ---------------------------------------------------------
 
     checkpoints = list(
-        Path("logs/rsl_rl/velocity_v1/2026-08-13_08-22-35_x_tracking_v1").glob("model_499.pt")
+        Path("logs/rsl_rl/velocity_v1/2026-08-13_09-32-34_x_tracking_v1").glob("model_499.pt")
     )
 
     # Nếu có nhiều run, lấy model_100.pt của run mới nhất.
