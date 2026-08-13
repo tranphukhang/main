@@ -187,7 +187,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             debug_vis=True,
 
             ranges=UniformVelocityCommandCfg.Ranges(
-                lin_vel_x=(0.05, 0.2),
+                lin_vel_x=(0.1, 0.2),
                 lin_vel_y=(0.0, 0.0),
                 ang_vel_z=(0.0, 0.0),
             ),
