@@ -133,7 +133,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         "phase": ObservationTermCfg(
             func=gait_phase,
             params={
-                "period": 0.5,
+                "period": 0.7,
                 "command_name": "twist",
             },
         ),
@@ -270,7 +270,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 },
 
                 "std_walking": {
-                    r"hip_roll_.*": 0.15,
+                    r"hip_roll_.*": 0.08,
 
                     r"hip_pitch_.*": 0.45,
 
@@ -306,7 +306,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             func=feet_gait,
             weight=0.5,
             params={
-                "period": 0.5,
+                "period": 0.7,
 
                 # Left / Right lệch nhau nửa chu kỳ.
                 "offset": [0.0, 0.5],
