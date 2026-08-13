@@ -66,7 +66,7 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         # -----------------------------------------------------
 
         experiment_name="velocity_v1",
-        run_name = "x_tracking_v2",
+        run_name = "x_tracking_v3",
 
         resume=True,
 

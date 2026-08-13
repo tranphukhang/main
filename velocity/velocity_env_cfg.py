@@ -133,7 +133,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         "phase": ObservationTermCfg(
             func=gait_phase,
             params={
-                "period": 0.7,
+                "period": 1.0,
                 "command_name": "twist",
             },
         ),
@@ -241,7 +241,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=0.5,
             params={
                 "command_name": "twist",
-                "std": 0.5,
+                "std": 0.2,
             },
         ),
 
@@ -252,7 +252,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "joint_velocity": RewardTermCfg(
             func=mdp.joint_vel_l2,
-            weight=-0.001,
+            weight=-0.003,
             params={
                 "asset_cfg": robot_cfg,
             },
@@ -306,7 +306,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             func=feet_gait,
             weight=0.5,
             params={
-                "period": 0.7,
+                "period": 1.0,
 
                 # Left / Right lệch nhau nửa chu kỳ.
                 "offset": [0.0, 0.5],
