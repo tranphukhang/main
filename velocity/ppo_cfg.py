@@ -70,8 +70,8 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
 
         resume=True,
 
-        load_run="2026-08-13_09-32-34_x_tracking_v1",
-        load_checkpoint="model_499.pt",
+        load_run="2026-08-13_10-36-53_x_tracking_v2",
+        load_checkpoint="model_998.pt",
 
         num_steps_per_env=24,
 
