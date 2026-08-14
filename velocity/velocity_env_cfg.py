@@ -32,7 +32,7 @@ from mjlab.sensor import ContactMatch, ContactSensorCfg
 
 from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 
-from standing.rewards import ankle_mechanical_limit_penalty
+from standing.rewards import ankle_passive_soft_limit_penalty
 from velocity.gait import feet_air_time_positive_biped
 
 
@@ -223,7 +223,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             debug_vis=True,
 
             ranges=UniformVelocityCommandCfg.Ranges(
-                lin_vel_x=(0.1, 0.2),
+                lin_vel_x=(0.15, 0.35),
                 lin_vel_y=(0.0, 0.0),
                 ang_vel_z=(0.0, 0.0),
             ),
@@ -269,7 +269,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=1.0,
             params={
                 "command_name": "twist",
-                "std": 0.5,
+                "std": 0.2,
             },
         ),
 
