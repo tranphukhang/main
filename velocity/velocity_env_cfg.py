@@ -88,6 +88,50 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         track_air_time=True,
     )
 
+    toe_contact_cfg = ContactSensorCfg(
+        name="toe_ground_contact",
+
+        primary=ContactMatch(
+            mode="geom",
+            pattern=(
+                r"left_foot_toe",
+                r"right_foot_toe",
+            ),
+            entity="robot",
+        ),
+
+        secondary=ContactMatch(
+            mode="body",
+            pattern="terrain",
+        ),
+
+        fields=("found", "force"),
+        reduce="netforce",
+        num_slots=1,
+    )
+
+    heel_contact_cfg = ContactSensorCfg(
+        name="heel_ground_contact",
+
+        primary=ContactMatch(
+            mode="geom",
+            pattern=(
+                r"left_foot_heel",
+                r"right_foot_heel",
+            ),
+            entity="robot",
+        ),
+
+        secondary=ContactMatch(
+            mode="body",
+            pattern="terrain",
+        ),
+
+        fields=("found", "force"),
+        reduce="netforce",
+        num_slots=1,
+    )
+
 
     # ---------------------------------------------------------
     # Observations
@@ -387,7 +431,11 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 "robot": ROBOT_CFG,
             },
 
-            sensors=(feet_ground_cfg,),
+            sensors=(
+                feet_ground_cfg,
+                toe_contact_cfg,
+                heel_contact_cfg,
+            ),
 
             num_envs=1,
             env_spacing=0.5,

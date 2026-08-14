@@ -116,3 +116,91 @@ def feet_clearance_flat(
     ) > command_threshold
 
     return cost * active.float()
+
+def feet_flat_contact(
+    env,
+    period: float,
+    offset: list[float],
+    stance_threshold: float,
+    edge_margin: float,
+    min_force: float,
+    command_threshold: float,
+    command_name: str,
+    toe_sensor_name: str,
+    heel_sensor_name: str,
+):
+    toe_sensor: ContactSensor = env.scene[toe_sensor_name]
+    heel_sensor: ContactSensor = env.scene[heel_sensor_name]
+
+    # ---------------------------------------------------------
+    # Toe / heel contact
+    # ---------------------------------------------------------
+
+    toe_force = torch.linalg.norm(
+        toe_sensor.data.force,
+        dim=-1,
+    )
+
+    heel_force = torch.linalg.norm(
+        heel_sensor.data.force,
+        dim=-1,
+    )
+
+    # Không chỉ "touch" mà phải có một lượng lực contact tối thiểu.
+    toe_contact = (
+        (toe_sensor.data.found > 0)
+        & (toe_force > min_force)
+    )
+
+    heel_contact = (
+        (heel_sensor.data.found > 0)
+        & (heel_force > min_force)
+    )
+
+    flat_contact = toe_contact & heel_contact
+
+    # ---------------------------------------------------------
+    # Gait phase của từng chân
+    # ---------------------------------------------------------
+
+    global_phase = (
+        (env.episode_length_buf * env.step_dt) / period
+    ).unsqueeze(1)
+
+    offsets = torch.tensor(
+        offset,
+        device=env.device,
+        dtype=global_phase.dtype,
+    ).view(1, -1)
+
+    leg_phase = (global_phase + offsets) % 1.0
+
+    # Chỉ yêu cầu flat-foot ở giữa stance.
+    mid_stance = (
+        (leg_phase >= edge_margin)
+        & (leg_phase < (stance_threshold - edge_margin))
+    )
+
+    # Thông thường chỉ một chân nằm trong mid-stance.
+    walking_reward = (
+        flat_contact & mid_stance
+    ).float().sum(dim=1)
+
+    # ---------------------------------------------------------
+    # Khi standing: muốn cả hai chân nằm phẳng
+    # ---------------------------------------------------------
+
+    standing_reward = flat_contact.float().mean(dim=1)
+
+    command = env.command_manager.get_command(command_name)
+
+    moving = (
+        torch.linalg.norm(command[:, :2], dim=1)
+        + torch.abs(command[:, 2])
+    ) > command_threshold
+
+    return torch.where(
+        moving,
+        walking_reward,
+        standing_reward,
+    )
