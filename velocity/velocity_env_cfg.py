@@ -297,7 +297,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "joint_velocity": RewardTermCfg(
             func=mdp.joint_vel_l2,
-            weight=-0.0005,
+            weight=-0.0002,
             params={
                 "asset_cfg": robot_cfg,
             },
@@ -433,6 +433,21 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                     {"step": 2500 * 24, "weight": -2.00},
                     {"step": 3500 * 24, "weight": -3.00},
                     {"step": 4500 * 24, "weight": -4.00},
+                ],
+            },
+        ),
+
+        "joint_velocity_weight": CurriculumTermCfg(
+            func=mdp.reward_curriculum,
+            params={
+                "reward_name": "joint_velocity",
+                "stages": [
+                    {"step": 0 * 24,    "weight": -0.0002},
+                    {"step": 1000 * 24, "weight": -0.0005},
+                    {"step": 2000 * 24, "weight": -0.0008},
+                    {"step": 3000 * 24, "weight": -0.0010},
+                    {"step": 4000 * 24, "weight": -0.0015},
+                    {"step": 5000 * 24, "weight": -0.0020},
                 ],
             },
         ),
