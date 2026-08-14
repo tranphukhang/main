@@ -159,8 +159,8 @@
                                     fullinertia="0.000053 0.000081 0.000104 0.0 0.000005 -0.000001"/>
                                 <geom type="mesh" mesh="feet_left"/>
                                 <geom type="capsule" fromto="-0.02054 -0.02 -0.02054 0.05187 -0.02 -0.02054" size="0.027" class="collision-left"/>
-                                <geom type="capsule" fromto="0.07 0.007 -0.03854 0.07 -0.047 -0.03854" size="0.009" class="collision-left"/>
-                                <geom type="capsule" fromto="-0.03854 0.007 -0.03854 -0.03854 -0.047 -0.03854" size="0.009" class="collision-left"/>
+                                <geom name="left_foot_toe" type="capsule" fromto="0.07 0.007 -0.03854 0.07 -0.047 -0.03854" size="0.009" class="collision-left"/>
+                                <geom name="left_foot_heel" type="capsule" fromto="-0.03854 0.007 -0.03854 -0.03854 -0.047 -0.03854" size="0.009" class="collision-left"/>
                                 <joint name="ankle_pitch_passive_4_left" type="hinge" axis="0 1 0" range="-30 30" damping="0.01"/>
                                 <site name="linkage_2b_left" pos="-0.02121 -0.02 -0.02121" size="0.001"/>
                                 <site
