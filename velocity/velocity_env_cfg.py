@@ -8,6 +8,7 @@ from mjlab.tasks.velocity.mdp import (
     track_linear_velocity,
     track_angular_velocity,
     variable_posture,
+    feet_slip,
 )
 
 from mjlab.managers.action_manager import ActionTermCfg
@@ -32,7 +33,7 @@ from mjlab.sensor import ContactMatch, ContactSensorCfg
 from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 
 from standing.rewards import ankle_mechanical_limit_penalty
-from velocity.gait import gait_phase, feet_gait, feet_clearance_flat, feet_flat_contact
+from velocity.gait import feet_air_time_positive_biped
 
 
 def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
@@ -46,14 +47,11 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         joint_names=ACTUATED_JOINTS,
         preserve_order=True,
     )
-
-    ankle_mechanical_cfg = SceneEntityCfg(
+    passive_ankle_cfg = SceneEntityCfg(
         "robot",
         joint_names=(
-            "ankle_pitch_left",
-            "calf_pitch_left",
-            "ankle_pitch_right",
-            "calf_pitch_right",
+            "ankle_pitch_passive_4_left",
+            "ankle_pitch_passive_4_right",
         ),
         preserve_order=True,
     )
@@ -132,6 +130,8 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         num_slots=1,
     )
 
+    
+
 
     # ---------------------------------------------------------
     # Observations
@@ -171,14 +171,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         "command": ObservationTermCfg(
             func=mdp.generated_commands,
             params={
-                "command_name": "twist",
-            },
-        ),
-
-        "phase": ObservationTermCfg(
-            func=gait_phase,
-            params={
-                "period": 2.0,
                 "command_name": "twist",
             },
         ),
@@ -274,125 +266,75 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     rewards: dict[str, RewardTermCfg] = {
         "track_linear_velocity": RewardTermCfg(
             func=track_linear_velocity,
-            weight=2.0,
+            weight=1.0,
             params={
                 "command_name": "twist",
-                "std": 0.30,
+                "std": 0.5,
             },
         ),
 
         "track_angular_velocity": RewardTermCfg(
             func=track_angular_velocity,
-            weight=1.5,
+            weight=1.0,
             params={
                 "command_name": "twist",
-                "std": 0.4,
+                "std": 0.5,
             },
         ),
 
         "orientation": RewardTermCfg(
             func=mdp.flat_orientation_l2,
-            weight=-1.0,
+            weight=-2.5,
         ),
 
-        "joint_velocity": RewardTermCfg(
-            func=mdp.joint_vel_l2,
-            weight=-0.0002,
+        "joint_acceleration": RewardTermCfg(
+            func=mdp.joint_acc_l2,
+            weight=-2.0e-7,
             params={
                 "asset_cfg": robot_cfg,
             },
         ),
 
-        "posture": RewardTermCfg(
-            func=variable_posture,
-            weight=1.0,
-            params={
-                "asset_cfg": robot_cfg,
-                "command_name": "twist",
-
-                "std_standing": {
-                    ".*": 0.05,
-                },
-
-                "std_walking": {
-                    r"hip_roll_.*": 0.08,
-
-                    r"hip_pitch_.*": 0.45,
-
-                    r"calf_pitch_.*": 0.45,
-
-                    r"ankle_pitch_.*": 0.20,
-                },
-
-                "std_running": {
-                    ".*": 0.30,
-                },
-
-                "walking_threshold": 0.05,
-                "running_threshold": 1.5,
-            },
+        "joint_torque": RewardTermCfg(
+            func=mdp.joint_torques_l2,
+            weight=-1.0e-6,
         ),
+
 
         "action_rate": RewardTermCfg(
             func=mdp.action_rate_l2,
-            weight=-0.05,
+            weight=-0.008,
         ),
 
-        "ankle_mechanical_limit": RewardTermCfg(
-            func=ankle_mechanical_limit_penalty,
-            weight=-0.5,
+        "feet_air_time": RewardTermCfg(
+            func=feet_air_time_positive_biped,
+            weight=0.25,
             params={
-                "asset_cfg": ankle_mechanical_cfg,
-                "limit": math.radians(30.0),
-            },
-        ),
-
-        "foot_gait": RewardTermCfg(
-            func=feet_gait,
-            weight=0.75,
-            params={
-                "period": 2.0,
-
-                # Left / Right lệch nhau nửa chu kỳ.
-                "offset": [0.0, 0.5],
-
-                # 56% stance → có double-support ngắn.
-                "threshold": 0.56,
-
-                "command_threshold": 0.05,
+                "threshold": 0.8,
                 "command_name": "twist",
+                "command_threshold": 0.05,
                 "sensor_name": "feet_ground_contact",
             },
         ),
 
-        "foot_clearance": RewardTermCfg(
-            func=feet_clearance_flat,
-            weight=-2.0,
+        "feet_slip": RewardTermCfg(
+            func=feet_slip,
+            weight=-0.25,
             params={
-                "target_height": 0.1,
+                "sensor_name": "feet_ground_contact",
                 "command_name": "twist",
                 "command_threshold": 0.05,
                 "asset_cfg": feet_cfg,
             },
         ),
 
-        "foot_flat": RewardTermCfg(
-            func=feet_flat_contact,
-            weight=0.30,
+        "ankle_mechanical_limit": RewardTermCfg(
+            func=ankle_passive_soft_limit_penalty,
+            weight=-0.25,
             params={
-                "period": 2.0,
-                "offset": [0.0, 0.5],
-
-                "stance_threshold": 0.56,
-                "edge_margin": 0.08,
-
-                "min_force": 2.0,
-
-                "command_threshold": 0.05,
-                "command_name": "twist",
-
-                "toe_sensor_name": "toe_ground_contact",
-                "heel_sensor_name": "heel_ground_contact",
+                "asset_cfg": passive_ankle_cfg,
+                "soft_limit": math.radians(24.0),
+                "hard_limit": math.radians(30.0),
             },
         ),
     }
@@ -422,48 +364,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     # ---------------------------------------------------------
 
     curriculum = {
-        "orientation_weight": CurriculumTermCfg(
-            func=mdp.reward_curriculum,
-            params={
-                "reward_name": "orientation",
-                "stages": [
-                    {"step": 0 * 24,    "weight": -0.50},
-                    {"step": 500 * 24,  "weight": -1.00},
-                    {"step": 1500 * 24, "weight": -1.50},
-                    {"step": 2500 * 24, "weight": -2.00},
-                    {"step": 3500 * 24, "weight": -3.00},
-                    {"step": 4500 * 24, "weight": -4.00},
-                ],
-            },
-        ),
-
-        "joint_velocity_weight": CurriculumTermCfg(
-            func=mdp.reward_curriculum,
-            params={
-                "reward_name": "joint_velocity",
-                "stages": [
-                    {"step": 0 * 24,    "weight": -0.0002},
-                    {"step": 1000 * 24, "weight": -0.0005},
-                    {"step": 2000 * 24, "weight": -0.0008},
-                    {"step": 3000 * 24, "weight": -0.0010},
-                    {"step": 4000 * 24, "weight": -0.0015},
-                    {"step": 5000 * 24, "weight": -0.0020},
-                ],
-            },
-        ),
-
-        "foot_flat_weight": CurriculumTermCfg(
-            func=mdp.reward_curriculum,
-            params={
-                "reward_name": "foot_flat",
-                "stages": [
-                    {"step": 0 * 24,    "weight": 0.30},
-                    {"step": 750 * 24,  "weight": 0.45},
-                    {"step": 1750 * 24, "weight": 0.60},
-                    {"step": 2750 * 24, "weight": 0.75},
-                ],
-            },
-        ),
     }
 
     # ---------------------------------------------------------

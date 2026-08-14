@@ -8,25 +8,28 @@ if TYPE_CHECKING:
     from mjlab.envs import ManagerBasedRlEnv
 
 
-def ankle_mechanical_limit_penalty(
-    env: ManagerBasedRlEnv,
+import torch
+
+
+def ankle_passive_soft_limit_penalty(
+    env,
     asset_cfg: SceneEntityCfg,
-    limit: float,
+    soft_limit: float,
+    hard_limit: float,
 ):
     robot = env.scene[asset_cfg.name]
 
-    joint_pos = robot.data.joint_pos[:, asset_cfg.joint_ids]
+    q = robot.data.joint_pos[:, asset_cfg.joint_ids]
 
-    ankle_left = joint_pos[:, 0]
-    calf_left = joint_pos[:, 1]
+    # Chỉ bắt đầu phạt khi vượt soft limit.
+    excess = torch.clamp(
+        torch.abs(q) - soft_limit,
+        min=0.0,
+    )
 
-    ankle_right = joint_pos[:, 2]
-    calf_right = joint_pos[:, 3]
+    span = hard_limit - soft_limit
 
-    passive_angle_left = ankle_left - calf_left
-    passive_angle_right = ankle_right - calf_right
+    # 0 tại soft limit, 1 tại hard limit.
+    penalty = (excess / span) ** 2
 
-    penalty_left = (passive_angle_left / limit) ** 4
-    penalty_right = (passive_angle_right / limit) ** 4
-
-    return penalty_left + penalty_right
+    return torch.sum(penalty, dim=1)
