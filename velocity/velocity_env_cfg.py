@@ -32,7 +32,7 @@ from mjlab.sensor import ContactMatch, ContactSensorCfg
 from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 
 from standing.rewards import ankle_mechanical_limit_penalty
-from velocity.gait import gait_phase, feet_gait, feet_clearance_flat
+from velocity.gait import gait_phase, feet_gait, feet_clearance_flat, feet_flat_contact
 
 
 def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
@@ -373,6 +373,26 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 "command_name": "twist",
                 "command_threshold": 0.05,
                 "asset_cfg": feet_cfg,
+            },
+        ),
+
+        "foot_flat": RewardTermCfg(
+            func=feet_flat_contact,
+            weight=0.30,
+            params={
+                "period": 2.0,
+                "offset": [0.0, 0.5],
+
+                "stance_threshold": 0.56,
+                "edge_margin": 0.08,
+
+                "min_force": 2.0,
+
+                "command_threshold": 0.05,
+                "command_name": "twist",
+
+                "toe_sensor_name": "toe_ground_contact",
+                "heel_sensor_name": "heel_ground_contact",
             },
         ),
     }
