@@ -451,6 +451,19 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 ],
             },
         ),
+
+        "foot_flat_weight": CurriculumTermCfg(
+            func=mdp.reward_curriculum,
+            params={
+                "reward_name": "foot_flat",
+                "stages": [
+                    {"step": 0 * 24,    "weight": 0.30},
+                    {"step": 750 * 24,  "weight": 0.45},
+                    {"step": 1750 * 24, "weight": 0.60},
+                    {"step": 2750 * 24, "weight": 0.75},
+                ],
+            },
+        ),
     }
 
     # ---------------------------------------------------------
