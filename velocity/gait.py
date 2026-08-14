@@ -146,18 +146,24 @@ def feet_flat_contact(
         dim=-1,
     )
 
-    # Không chỉ "touch" mà phải có một lượng lực contact tối thiểu.
-    toe_contact = (
-        (toe_sensor.data.found > 0)
-        & (toe_force > min_force)
+    # Mức contact liên tục từ 0 -> 1.
+    toe_score = torch.clamp(
+        toe_force / min_force,
+        min=0.0,
+        max=1.0,
     )
 
-    heel_contact = (
-        (heel_sensor.data.found > 0)
-        & (heel_force > min_force)
+    heel_score = torch.clamp(
+        heel_force / min_force,
+        min=0.0,
+        max=1.0,
     )
 
-    flat_contact = toe_contact & heel_contact
+    # Flat-foot bị quyết định bởi đầu chân đang chịu tải ít hơn.
+    flat_score = torch.minimum(
+        toe_score,
+        heel_score,
+    )
 
     # ---------------------------------------------------------
     # Gait phase của từng chân
@@ -183,14 +189,10 @@ def feet_flat_contact(
 
     # Thông thường chỉ một chân nằm trong mid-stance.
     walking_reward = (
-        flat_contact & mid_stance
-    ).float().sum(dim=1)
+        flat_score * mid_stance.float()
+    ).sum(dim=1)
 
-    # ---------------------------------------------------------
-    # Khi standing: muốn cả hai chân nằm phẳng
-    # ---------------------------------------------------------
-
-    standing_reward = flat_contact.float().mean(dim=1)
+    standing_reward = flat_score.mean(dim=1)
 
     command = env.command_manager.get_command(command_name)
 
