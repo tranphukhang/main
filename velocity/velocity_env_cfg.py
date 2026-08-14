@@ -33,6 +33,11 @@ from mjlab.sensor import ContactMatch, ContactSensorCfg
 from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 
 from standing.rewards import ankle_passive_soft_limit_penalty
+from velocity.rewards import (
+    stand_still_joint_deviation_l1,
+    joint_deviation_l1,
+    no_jumps,
+)
 from velocity.gait import feet_air_time_positive_biped
 
 
@@ -47,6 +52,16 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         joint_names=ACTUATED_JOINTS,
         preserve_order=True,
     )
+
+    hip_roll_cfg = SceneEntityCfg(
+        "robot",
+        joint_names=(
+            "hip_roll_left",
+            "hip_roll_right",
+        ),
+        preserve_order=True,
+    )
+
     passive_ankle_cfg = SceneEntityCfg(
         "robot",
         joint_names=(
@@ -264,6 +279,29 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     # ---------------------------------------------------------
 
     rewards: dict[str, RewardTermCfg] = {
+        "termination_penalty": RewardTermCfg(
+            func=mdp.is_terminated,
+            weight=-100.0,
+        ),
+
+        "stand_still": RewardTermCfg(
+            func=stand_still_joint_deviation_l1,
+            weight=-0.4,
+            params={
+                "command_name": "twist",
+                "command_threshold": 0.05,
+                "asset_cfg": robot_cfg,
+            },
+        ),
+
+        "joint_deviation_hip_roll": RewardTermCfg(
+            func=joint_deviation_l1,
+            weight=-0.1,
+            params={
+                "asset_cfg": hip_roll_cfg,
+            },
+        ),
+
         "track_linear_velocity": RewardTermCfg(
             func=track_linear_velocity,
             weight=1.0,
@@ -314,6 +352,15 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 "command_name": "twist",
                 "command_threshold": 0.05,
                 "sensor_name": "feet_ground_contact",
+            },
+        ),
+
+        "no_jumps": RewardTermCfg(
+            func=no_jumps,
+            weight=-0.5,
+            params={
+                "sensor_name": "feet_ground_contact",
+                "threshold": 1.0,
             },
         ),
 
