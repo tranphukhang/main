@@ -22,7 +22,7 @@ from mjlab.viewer import ViewerConfig
 
 from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 
-from standing.rewards import ankle_mechanical_limit_penalty
+from standing.rewards import ankle_passive_soft_limit_penalty
 
 
 class StandingBodyImpulse(mdp.apply_body_impulse):
@@ -48,13 +48,11 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
         preserve_order=True,
     )
 
-    ankle_mechanical_cfg = SceneEntityCfg(
+    passive_ankle_cfg = SceneEntityCfg(
         "robot",
         joint_names=(
-            "ankle_pitch_left",
-            "calf_pitch_left",
-            "ankle_pitch_right",
-            "calf_pitch_right",
+            "ankle_pitch_passive_4_left",
+            "ankle_pitch_passive_4_right",
         ),
         preserve_order=True,
     )
@@ -161,7 +159,7 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
             params={
                 "force_range": (-15.0, 15.0),
                 "torque_range": (0.0, 0.0),
-                "duration_s": (0.5, 0.5),
+                "duration_s": (1.0, 1.0),
                 "cooldown_s": (2.0, 4.0),
                 "asset_cfg": base_body_cfg,
             },
@@ -208,11 +206,12 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
 
         "ankle_mechanical_limit": RewardTermCfg(
-            func=ankle_mechanical_limit_penalty,
-            weight=-0.5,
+            func=ankle_passive_soft_limit_penalty,
+            weight=-0.25,
             params={
-                "asset_cfg": ankle_mechanical_cfg,
-                "limit": math.radians(30.0),
+                "asset_cfg": passive_ankle_cfg,
+                "soft_limit": math.radians(24.0),
+                "hard_limit": math.radians(30.0),
             },
         ),
     }
