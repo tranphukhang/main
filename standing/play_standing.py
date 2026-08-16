@@ -19,10 +19,8 @@ def main():
     # ---------------------------------------------------------
 
     checkpoints = list(
-        Path("logs/rsl_rl/standing_v1").glob("*/model_599.pt")
+        Path("logs/rsl_rl/standing_v1").glob("*/model_2595.pt")
     )
-
-    # Nếu có nhiều run, lấy model_100.pt của run mới nhất.
     checkpoint = max(
         checkpoints,
         key=lambda path: path.stat().st_mtime,
@@ -37,7 +35,7 @@ def main():
     train_env_cfg = standing_env_cfg()
 
     play_env_cfg = standing_env_cfg()
-    play_env_cfg.scene.num_envs = 3
+    play_env_cfg.scene.num_envs = 1
     play_env_cfg.episode_length_s = 30.0
     play_env_cfg.events["body_impulse"].params["cooldown_s"] = (2.0, 2.0)
 
@@ -54,7 +52,7 @@ def main():
 
     play_cfg = PlayConfig(
         checkpoint_file=str(checkpoint),
-        viewer="viser",
+        viewer="native",
     )
 
     # Dùng custom Viser viewer nhưng vẫn giữ nguyên toàn bộ checkpoint loading của mjlab.

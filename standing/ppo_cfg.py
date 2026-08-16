@@ -69,8 +69,8 @@ def standing_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         run_name = "push_v3",
 
         resume=True,
-        load_run="2026-08-09_20-48-09_push_v2",
-        load_checkpoint="model_599.pt",
+        load_run="2026-08-15_15-10-47_push_v3",
+        load_checkpoint="model_2096.pt",
 
         num_steps_per_env=24,
 
