@@ -344,9 +344,27 @@ class JointPlotter:
         # Animation support polygon
         # =====================================================
 
-        (self.fig_support,self.support_animation,) = create_support_polygon_animation(
-            support_polygons,
-            t,
+        video_stride = int(
+            round(
+                self.env.step_dt
+                / self.env.physics_dt
+            )
+        )
+
+        video_polygons = support_polygons[
+            ::video_stride
+        ]
+
+        video_time = t[
+            ::video_stride
+        ]
+
+        (
+            self.fig_support,
+            self.support_animation,
+        ) = create_support_polygon_animation(
+            video_polygons,
+            video_time,
         )
 
         # =====================================================
