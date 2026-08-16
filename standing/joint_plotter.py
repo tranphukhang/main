@@ -125,19 +125,6 @@ class JointPlotter:
 
         self.sample_count += 1
 
-    def run(
-        self,
-        num_steps=None,
-        catch_sigint=True,
-    ):
-
-        super().run(
-            num_steps=int(
-                12.0 / self.env.unwrapped.step_dt
-            ),
-            catch_sigint=catch_sigint,
-        )
-
     # =========================================================
     # FINALIZE - chỉ gọi 1 lần sau 20 s
     # =========================================================
@@ -371,6 +358,19 @@ def with_joint_plots(base_viewer_class):
                 env=self.env.unwrapped,
                 env_idx=self.env_idx,
             )
+
+        def run(
+                self,
+                num_steps=None,
+                catch_sigint=True,
+            ):
+        
+                super().run(
+                    num_steps=int(
+                        12.0 / self.env.unwrapped.step_dt
+                    ),
+                    catch_sigint=catch_sigint,
+                )
 
         # =====================================================
         # Mỗi action step -> lưu 1 mẫu
