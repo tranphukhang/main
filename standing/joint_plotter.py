@@ -76,6 +76,12 @@ class JointPlotter:
             dtype=dtype,
         )
 
+        self.impulse_active_buffer = torch.empty(
+            self.max_samples,
+            device=device,
+            dtype=torch.bool,
+        )
+
         # Full robot configuration để tính contact sau mô phỏng
         num_qpos = self.env.sim.data.qpos.shape[1]
 
@@ -233,6 +239,27 @@ class JointPlotter:
             self.env.sim.data.nacon[0]
         )
 
+        # =====================================================
+        # Kiểm tra external impulse
+        # =====================================================
+
+        external_force = (
+            self.env.sim.data.xfrc_applied[
+                self.env_idx,
+                :,
+                0:3,
+            ]
+        )
+
+        force_norm = torch.linalg.vector_norm(
+            external_force,
+            dim=1,
+        )
+
+        self.impulse_active_buffer[i] = torch.any(
+            force_norm > 1e-6
+        )
+
         self.sample_count += 1
 
     # =========================================================
@@ -271,6 +298,13 @@ class JointPlotter:
 
         tau = (
             self.torque_buffer[:n]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+        impulse_active = (
+            self.impulse_active_buffer[:n]
             .detach()
             .cpu()
             .numpy()
@@ -502,6 +536,12 @@ class JointPlotter:
                 q[:, i],
             )
 
+            self.add_impulse_regions(
+                ax,
+                t,
+                impulse_active,
+            )
+
             ax.set_title(name)
             ax.set_xlabel("Time [s]")
             ax.set_ylabel("Position [rad]")
@@ -538,6 +578,12 @@ class JointPlotter:
             ax.plot(
                 t,
                 tau[:, i],
+            )
+
+            self.add_impulse_regions(
+                ax,
+                t,
+                impulse_active,
             )
 
             ax.set_title(name)
@@ -581,6 +627,53 @@ class JointPlotter:
         ):
             self.env.scene.update = (
                 self._original_scene_update
+            )
+
+    def add_impulse_regions(
+        self,
+        ax,
+        t,
+        impulse_active,
+    ):
+
+        active = impulse_active.astype(
+            np.int8
+        )
+
+        padded = np.pad(
+            active,
+            (1, 1),
+            constant_values=0,
+        )
+
+        changes = np.diff(
+            padded
+        )
+
+        starts = np.where(
+            changes == 1
+        )[0]
+
+        ends = (
+            np.where(
+                changes == -1
+            )[0]
+            - 1
+        )
+
+        for i, (start, end) in enumerate(
+            zip(starts, ends)
+        ):
+
+            ax.axvspan(
+                t[start],
+                t[end],
+                alpha=0.15,
+                label=(
+                    "External impulse"
+                    if i == 0
+                    else None
+                ),
             )
 
 
