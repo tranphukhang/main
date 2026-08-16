@@ -1,6 +1,16 @@
 import mujoco
 import numpy as np
+import matplotlib.pyplot as plt
 
+from matplotlib.collections import (
+    LineCollection,
+)
+
+from matplotlib.patches import Polygon
+
+from standing.support_polygon import (
+    convex_hull_2d,
+)
 
 def compute_cop(
     mj_model,
@@ -162,4 +172,215 @@ def compute_cop(
     return (
         cop_history,
         total_normal_force,
+    )
+
+def plot_cop_trajectory(
+    cop_history,
+    time_history,
+    support_polygons,
+    output_path,
+):
+
+    # =========================================================
+    # 1. COP hợp lệ
+    # =========================================================
+
+    valid = np.all(
+        np.isfinite(cop_history),
+        axis=1,
+    )
+
+    if np.sum(valid) < 2:
+        print(
+            "Không đủ dữ liệu COP để vẽ."
+        )
+        return
+
+    # =========================================================
+    # 2. Tạo support-region envelope
+    # =========================================================
+
+    valid_polygons = [
+        polygon
+        for polygon in support_polygons
+        if len(polygon) >= 3
+    ]
+
+    if len(valid_polygons) == 0:
+        print(
+            "Không có support polygon hợp lệ."
+        )
+        return
+
+    all_support_points = np.vstack(
+        valid_polygons
+    )
+
+    support_envelope = convex_hull_2d(
+        all_support_points
+    )
+
+    # =========================================================
+    # 3. Tạo các đoạn COP liên tiếp
+    # =========================================================
+
+    pair_valid = (
+        valid[:-1]
+        & valid[1:]
+    )
+
+    p0 = cop_history[:-1][
+        pair_valid
+    ]
+
+    p1 = cop_history[1:][
+        pair_valid
+    ]
+
+    segments = np.stack(
+        (
+            p0,
+            p1,
+        ),
+        axis=1,
+    )
+
+    segment_time = 0.5 * (
+        time_history[:-1][pair_valid]
+        + time_history[1:][pair_valid]
+    )
+
+    # =========================================================
+    # 4. Figure
+    # =========================================================
+
+    fig, ax = plt.subplots(
+        figsize=(8, 7)
+    )
+
+    support_patch = Polygon(
+        support_envelope,
+        closed=True,
+        alpha=0.2,
+        label="Support region envelope",
+    )
+
+    ax.add_patch(
+        support_patch
+    )
+
+    # =========================================================
+    # 5. COP trajectory có màu theo thời gian
+    # =========================================================
+
+    line = LineCollection(
+        segments,
+        cmap="viridis",
+        linewidth=1.5,
+    )
+
+    line.set_array(
+        segment_time
+    )
+
+    line.set_clim(
+        time_history[0],
+        time_history[-1],
+    )
+
+    ax.add_collection(
+        line
+    )
+
+    colorbar = fig.colorbar(
+        line,
+        ax=ax,
+    )
+
+    colorbar.set_label(
+        "Time [s]"
+    )
+
+    # =========================================================
+    # 6. Start / End
+    # =========================================================
+
+    valid_indices = np.where(
+        valid
+    )[0]
+
+    first = valid_indices[0]
+    last = valid_indices[-1]
+
+    ax.plot(
+        cop_history[first, 0],
+        cop_history[first, 1],
+        "o",
+        markersize=8,
+        label="Start",
+    )
+
+    ax.plot(
+        cop_history[last, 0],
+        cop_history[last, 1],
+        "x",
+        markersize=9,
+        markeredgewidth=2,
+        label="End",
+    )
+
+    # =========================================================
+    # 7. Giới hạn hình
+    # =========================================================
+
+    all_plot_points = np.vstack(
+        (
+            support_envelope,
+            cop_history[valid],
+        )
+    )
+
+    margin = 0.03
+
+    ax.set_xlim(
+        np.min(all_plot_points[:, 0]) - margin,
+        np.max(all_plot_points[:, 0]) + margin,
+    )
+
+    ax.set_ylim(
+        np.min(all_plot_points[:, 1]) - margin,
+        np.max(all_plot_points[:, 1]) + margin,
+    )
+
+    ax.set_aspect(
+        "equal",
+        adjustable="box",
+    )
+
+    ax.set_xlabel(
+        "X [m]"
+    )
+
+    ax.set_ylabel(
+        "Y [m]"
+    )
+
+    ax.set_title(
+        "COP Trajectory over Time"
+    )
+
+    ax.grid(True)
+    ax.legend()
+
+    fig.savefig(
+        output_path,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    plt.close(fig)
+
+    print(
+        f"COP trajectory saved to: "
+        f"{output_path}"
     )

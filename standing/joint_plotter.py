@@ -11,8 +11,10 @@ from standing.support_polygon import (
     compute_support_polygons,
     create_support_polygon_animation,
 )
-from standing.cop import compute_cop
-
+from standing.cop import (
+    compute_cop,
+    plot_cop_trajectory,
+)
 
 class JointPlotter:
 
@@ -412,6 +414,18 @@ class JointPlotter:
         output_dir.mkdir(
             parents=True,
             exist_ok=True,
+        )
+
+        cop_trajectory_path = (
+            output_dir
+            / "cop_trajectory.png"
+        )
+
+        plot_cop_trajectory(
+            cop_history=cop,
+            time_history=t,
+            support_polygons=support_polygons,
+            output_path=cop_trajectory_path,
         )
 
         # -----------------------------------------------------
