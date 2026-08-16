@@ -63,6 +63,15 @@ class JointPlotter:
             dtype=dtype,
         )
 
+        # Full robot configuration để tính contact sau mô phỏng
+        num_qpos = self.env.sim.data.qpos.shape[1]
+
+        self.qpos_buffer = torch.empty(
+            (self.max_samples, num_qpos),
+            device=device,
+            dtype=self.env.sim.data.qpos.dtype,
+        )
+
         # Time nằm trên CPU
         self.time_buffer = (
             np.arange(1, self.max_samples + 1)
@@ -97,6 +106,13 @@ class JointPlotter:
             self.robot.data.qfrc_actuator[
                 self.env_idx,
                 self.joint_ids,
+            ]
+        )
+
+        # Lưu toàn bộ qpos của robot
+        self.qpos_buffer[i].copy_(
+            self.env.sim.data.qpos[
+                self.env_idx
             ]
         )
 
