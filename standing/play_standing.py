@@ -52,7 +52,7 @@ def main():
 
     play_cfg = PlayConfig(
         checkpoint_file=str(checkpoint),
-        viewer="native",
+        viewer="viser",
     )
 
     # Dùng custom Viser viewer nhưng vẫn giữ nguyên toàn bộ checkpoint loading của mjlab.
