@@ -6,6 +6,7 @@ from mjlab.tasks.registry import register_mjlab_task
 
 from standing.standing_env_cfg import standing_env_cfg
 from standing.ppo_cfg import standing_ppo_runner_cfg
+from standing.eval_native_viewer import CopEvalNativeViewer
 
 
 TASK_ID = "Mjlab-Standing-COP-Eval"
@@ -42,7 +43,7 @@ def main():
     # Cho episode dài hơn để quan sát
     eval_env_cfg.episode_length_s = 20.0
 
-    # Giữ xung lực lặp lại mỗi 2 giây để test trước
+    # Giữ xung lực lặp lại mỗi 4 giây để test trước
     eval_env_cfg.events["body_impulse"].params[
         "cooldown_s"
     ] = (4.0, 4.0)
@@ -66,6 +67,8 @@ def main():
         checkpoint_file=str(checkpoint),
         viewer="native",
     )
+
+    play_script.NativeMujocoViewer = CopEvalNativeViewer
 
     play_script.run_play(
         TASK_ID,
