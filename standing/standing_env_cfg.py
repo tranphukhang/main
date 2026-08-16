@@ -157,9 +157,9 @@ def standing_env_cfg() -> ManagerBasedRlEnvCfg:
             func=StandingBodyImpulse,
             mode="step",
             params={
-                "force_range": (-25, 25),
+                "force_range": (-20, 20),
                 "torque_range": (0.0, 0.0),
-                "duration_s": (0.08, 0.12),
+                "duration_s": (0.1, 0.1),
                 "cooldown_s": (2.0, 4.0),
                 "asset_cfg": base_body_cfg,
             },

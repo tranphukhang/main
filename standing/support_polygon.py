@@ -1,12 +1,11 @@
 import mujoco
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-from matplotlib.patches import Polygon
 from matplotlib.animation import (
     FuncAnimation,
-    PillowWriter,
+    FFMpegWriter,
 )
+from matplotlib.patches import Polygon
 
 
 def convex_hull_2d(points):
@@ -326,13 +325,19 @@ def create_support_polygon_animation(
     )
 
     output_path = (
-    "logs/standing_eval/"
-    "support_polygon.gif"
-)
+        "logs/standing_eval/"
+        "support_polygon.mp4"
+    )
+
+    writer = FFMpegWriter(
+        fps=50,
+        bitrate=3000,
+    )
 
     animation.save(
         output_path,
-        writer=PillowWriter(fps=50),
+        writer=writer,
+        dpi=150,
     )
 
     plt.close(fig)
