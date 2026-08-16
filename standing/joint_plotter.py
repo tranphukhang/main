@@ -5,6 +5,10 @@ import numpy as np
 import torch
 
 from robot_cfg import ACTUATED_JOINTS
+from standing.support_polygon import (
+    compute_support_polygons,
+    create_support_polygon_animation,
+)
 
 
 class JointPlotter:
@@ -15,6 +19,9 @@ class JointPlotter:
         self.env_idx = env_idx
 
         self.robot = env.scene["robot"]
+
+        self.fig_support = None
+        self.support_animation = None
 
         # =====================================================
         # 1. Lấy 8 joint chủ động
@@ -118,6 +125,19 @@ class JointPlotter:
 
         self.sample_count += 1
 
+    def run(
+        self,
+        num_steps=None,
+        catch_sigint=True,
+    ):
+
+        super().run(
+            num_steps=int(
+                12.0 / self.env.unwrapped.step_dt
+            ),
+            catch_sigint=catch_sigint,
+        )
+
     # =========================================================
     # FINALIZE - chỉ gọi 1 lần sau 20 s
     # =========================================================
@@ -157,6 +177,50 @@ class JointPlotter:
             .detach()
             .cpu()
             .numpy()
+        )
+
+        qpos = (
+            self.qpos_buffer[:n]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+        # =====================================================
+        # Tính support polygon offline
+        # =====================================================
+
+        support_polygons = compute_support_polygons(
+            self.env.sim.mj_model,
+            qpos,
+        )
+
+        num_valid = sum(
+            len(polygon) >= 3
+            for polygon in support_polygons
+        )
+
+        print(
+            f"Support polygons: "
+            f"{num_valid}/{n} samples "
+            f"có polygon hợp lệ."
+        )
+
+        print(
+            "Support polygon sample đầu tiên:"
+        )
+
+        print(
+            support_polygons[0]
+        )
+
+        # =====================================================
+        # Animation support polygon
+        # =====================================================
+
+        (self.fig_support,self.support_animation,) = create_support_polygon_animation(
+            support_polygons,
+            t,
         )
 
         # =====================================================
@@ -249,6 +313,8 @@ class JointPlotter:
             dpi=150,
         )
 
+        plt.close(self.fig_position)
+
         # =====================================================
         # 4. Plot joint torque
         # =====================================================
@@ -285,9 +351,8 @@ class JointPlotter:
             dpi=150,
         )
 
-        # Hiển thị sau khi simulation đã dừng
-        plt.show(block=False)
-        plt.pause(0.001)
+
+        plt.close(self.fig_torque)
 
 
 # =============================================================
@@ -313,47 +378,19 @@ def with_joint_plots(base_viewer_class):
 
         def _execute_step(self):
 
-            # Đã đủ 20 s
-            if (
-                self._joint_plotter.sample_count
-                >= self._joint_plotter.max_samples
-            ):
-
-                self._joint_plotter.finalize()
-                self.pause()
-
-                return False
-
             success = super()._execute_step()
 
             if success:
 
-                # Sampling đúng theo action = 50 Hz
                 self._joint_plotter.record()
 
-                # Đủ 1000 samples = 20 s
                 if (
                     self._joint_plotter.sample_count
                     >= self._joint_plotter.max_samples
                 ):
-
                     self._joint_plotter.finalize()
 
-                    # Dừng simulation
-                    self.pause()
-
             return success
-
-        # =====================================================
-        # Sau khi kết thúc, chỉ xử lý event của Matplotlib
-        # =====================================================
-
-        def sync_env_to_viewer(self):
-
-            super().sync_env_to_viewer()
-
-            if self._joint_plotter.finalized:
-                plt.pause(0.001)
 
         # =====================================================
         # Close
@@ -369,6 +406,11 @@ def with_joint_plots(base_viewer_class):
             if self._joint_plotter.fig_torque is not None:
                 plt.close(
                     self._joint_plotter.fig_torque
+                )
+
+            if self._joint_plotter.fig_support is not None:
+                plt.close(
+                    self._joint_plotter.fig_support
                 )
 
             super().close()
