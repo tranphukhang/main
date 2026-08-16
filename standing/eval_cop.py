@@ -191,6 +191,37 @@ def main():
     logger.install_physics_hook()
 
     # =========================================================
+    # Contact visualization cho standing_eval video
+    # =========================================================
+
+    base_env = env.unwrapped
+
+    original_update_visualizers = (
+        base_env.update_visualizers
+    )
+
+
+    def update_visualizers_with_contacts(
+        visualizer,
+    ):
+
+        # Giữ các visualization hiện tại,
+        # ví dụ external impulse
+        original_update_visualizers(
+            visualizer
+        )
+
+        # Thêm contact point + contact force
+        logger.add_contact_visualization(
+            visualizer
+        )
+
+
+    base_env.update_visualizers = (
+        update_visualizers_with_contacts
+    )
+
+    # =========================================================
     # 10. Headless simulation
     # =========================================================
 
@@ -210,7 +241,12 @@ def main():
         logger.finalize()
 
     finally:
+        base_env.update_visualizers = (
+            original_update_visualizers
+        )
+
         logger.remove_physics_hook()
+
         env.close()
 
     print("Evaluation finished.")

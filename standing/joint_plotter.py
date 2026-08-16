@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import mujoco
 import mujoco_warp as mjwarp
 import warp as wp
 import matplotlib.pyplot as plt
@@ -31,6 +32,28 @@ class JointPlotter:
         self.robot = env.scene[
             "robot"
         ]
+
+        # =====================================================
+        # ID terrain và hai bàn chân cho visualization
+        # =====================================================
+
+        self.floor_geom_id = mujoco.mj_name2id(
+            self.env.sim.mj_model,
+            mujoco.mjtObj.mjOBJ_GEOM,
+            "terrain",
+        )
+
+        self.left_foot_body_id = mujoco.mj_name2id(
+            self.env.sim.mj_model,
+            mujoco.mjtObj.mjOBJ_BODY,
+            "robot/feet_left",
+        )
+
+        self.right_foot_body_id = mujoco.mj_name2id(
+            self.env.sim.mj_model,
+            mujoco.mjtObj.mjOBJ_BODY,
+            "robot/feet_right",
+        )
 
         self.fig_support = None
         self.support_animation = None
@@ -956,6 +979,187 @@ class JointPlotter:
 
             self.env.scene.update = (
                 self._original_scene_update
+            )
+
+    def add_contact_visualization(
+        self,
+        visualizer,
+        min_normal_force=1.0,
+        force_scale=0.002,
+    ):
+
+        # =====================================================
+        # 1. Lấy contact force hiện tại
+        # =====================================================
+
+        mjwarp.contact_force(
+            self.env.sim.wp_model,
+            self.env.sim.wp_data,
+            self.contact_ids_wp,
+            False,
+            self.contact_force_wp,
+        )
+
+        ncon = int(
+            self.env.sim.data.nacon[
+                self.env_idx
+            ].item()
+        )
+
+        if ncon <= 0:
+            return
+
+        contact_pos = (
+            self.env.sim.data.contact.pos[
+                :ncon
+            ]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+        contact_geom = (
+            self.env.sim.data.contact.geom[
+                :ncon
+            ]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+        contact_frame = (
+            self.env.sim.data.contact.frame[
+                :ncon
+            ]
+            .detach()
+            .cpu()
+            .numpy()
+            .reshape(
+                ncon,
+                3,
+                3,
+            )
+        )
+
+        normal_force = (
+            self.contact_force_torch[
+                :ncon,
+                0,
+            ]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+        # =====================================================
+        # 2. Vẽ contact bàn chân <-> terrain
+        # =====================================================
+
+        for j in range(ncon):
+
+            fn = float(
+                normal_force[j]
+            )
+
+            if fn <= min_normal_force:
+                continue
+
+            geom0 = int(
+                contact_geom[
+                    j,
+                    0,
+                ]
+            )
+
+            geom1 = int(
+                contact_geom[
+                    j,
+                    1,
+                ]
+            )
+
+            # MuJoCo:
+            # contact normal hướng từ geom0 -> geom1
+            normal = contact_frame[
+                j,
+                0,
+                :
+            ]
+
+            # ---------------------------------------------
+            # Xác định lực phản lực tác dụng lên bàn chân
+            # ---------------------------------------------
+
+            if geom0 == self.floor_geom_id:
+
+                foot_geom = geom1
+
+                force_direction = normal
+
+            elif geom1 == self.floor_geom_id:
+
+                foot_geom = geom0
+
+                force_direction = -normal
+
+            else:
+                continue
+
+            if foot_geom < 0:
+                continue
+
+            body_id = int(
+                self.env.sim.mj_model.geom_bodyid[
+                    foot_geom
+                ]
+            )
+
+            if body_id not in (
+                self.left_foot_body_id,
+                self.right_foot_body_id,
+            ):
+                continue
+
+            # =================================================
+            # Contact point
+            # =================================================
+
+            point = contact_pos[
+                j
+            ]
+
+            visualizer.add_sphere(
+                center=point,
+                radius=0.007,
+                color=(
+                    1.0,
+                    0.0,
+                    0.0,
+                    1.0,
+                ),
+            )
+
+            # =================================================
+            # Normal contact force
+            # =================================================
+
+            force_end = (
+                point
+                + force_direction
+                * fn
+                * force_scale
+            )
+
+            visualizer.add_arrow(
+                start=point,
+                end=force_end,
+                color=(
+                    0.0,
+                    1.0,
+                    0.0,
+                    1.0,
+                ),
+                width=0.006,
             )
 
     # =========================================================
