@@ -1,8 +1,8 @@
-from collections import deque
 import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 
 from robot_cfg import ACTUATED_JOINTS
 
@@ -39,23 +39,38 @@ class JointPlotter:
         # 2. Bộ nhớ dữ liệu
         # =====================================================
 
-        # 20 s x 50 Hz = khoảng 1000 mẫu.
-        # Để dư 2000 mẫu.
-        max_samples = 2000
+        self.step_dt = float(env.step_dt)
 
-        self.time_history = deque(maxlen=max_samples)
+        # 20 s × 50 Hz = 1000 mẫu
+        self.max_samples = int(
+            20.0 / self.step_dt
+        )
 
-        self.position_history = {
-            name: deque(maxlen=max_samples)
-            for name in self.joint_names
-        }
+        self.sample_count = 0
 
-        self.torque_history = {
-            name: deque(maxlen=max_samples)
-            for name in self.joint_names
-        }
+        num_joints = len(self.joint_names)
 
-        self.last_time = None
+        device = self.robot.data.joint_pos.device
+        dtype = self.robot.data.joint_pos.dtype
+
+        # Buffer nằm trên GPU
+        self.position_buffer = torch.empty(
+            (self.max_samples, num_joints),
+            device=device,
+            dtype=dtype,
+        )
+
+        self.torque_buffer = torch.empty(
+            (self.max_samples, num_joints),
+            device=device,
+            dtype=dtype,
+        )
+
+        # Time không cần đọc từ GPU
+        self.time_buffer = (
+            np.arange(1, self.max_samples + 1)
+            * self.step_dt
+        )
 
         # =====================================================
         # 3. Khởi tạo GUI
@@ -138,73 +153,28 @@ class JointPlotter:
 
     def record(self):
 
-        # -----------------------------------------------------
-        # Thời gian hiện tại của episode
-        # -----------------------------------------------------
+        if self.sample_count >= self.max_samples:
+            return
 
-        episode_step = int(
-            self.env.episode_length_buf[
-                self.env_idx
-            ]
-            .detach()
-            .cpu()
-            .item()
-        )
+        i = self.sample_count
 
-        t = episode_step * float(self.env.step_dt)
-
-        # Nếu episode reset thì xóa dữ liệu episode trước
-        if (
-            self.last_time is not None
-            and t < self.last_time
-        ):
-            self.clear()
-
-        self.last_time = t
-
-        # -----------------------------------------------------
         # Joint position
-        # -----------------------------------------------------
-
-        q = (
+        self.position_buffer[i].copy_(
             self.robot.data.joint_pos[
                 self.env_idx,
                 self.joint_ids,
             ]
-            .detach()
-            .cpu()
-            .numpy()
         )
 
-        # -----------------------------------------------------
         # Actuator torque
-        # -----------------------------------------------------
-
-        tau = (
+        self.torque_buffer[i].copy_(
             self.robot.data.qfrc_actuator[
                 self.env_idx,
                 self.joint_ids,
             ]
-            .detach()
-            .cpu()
-            .numpy()
         )
 
-        # -----------------------------------------------------
-        # Lưu history
-        # -----------------------------------------------------
-
-        self.time_history.append(t)
-
-        for i, name in enumerate(self.joint_names):
-
-            self.position_history[name].append(
-                float(q[i])
-            )
-
-            self.torque_history[name].append(
-                float(tau[i])
-            )
+        self.sample_count += 1
 
     # =========================================================
     # UPDATE GUI
@@ -212,56 +182,75 @@ class JointPlotter:
 
     def update(self):
 
-        if len(self.time_history) < 2:
+        # Số mẫu hiện có
+        n = self.sample_count
+
+        if n < 2:
             return
 
-        t = np.asarray(self.time_history)
+        # =========================================================
+        # 1. Lấy dữ liệu để vẽ
+        # =========================================================
 
-        # -----------------------------------------------------
-        # Position
-        # -----------------------------------------------------
+        # Time đã nằm trên CPU
+        t = self.time_buffer[:n]
 
-        for ax, name in zip(
-            self.axes_position,
-            self.joint_names,
-        ):
+        # Chỉ chuyển GPU -> CPU khi cần update GUI
+        q = (
+            self.position_buffer[:n]
+            .detach()
+            .cpu()
+            .numpy()
+        )
 
-            q = np.asarray(
-                self.position_history[name]
+        tau = (
+            self.torque_buffer[:n]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+        # =========================================================
+        # 2. Update Joint Position
+        # =========================================================
+
+        for i, (ax, name) in enumerate(
+            zip(
+                self.axes_position,
+                self.joint_names,
             )
+        ):
 
             self.position_lines[name].set_data(
                 t,
-                q,
+                q[:, i],
             )
 
             ax.relim()
             ax.autoscale_view()
 
-        # -----------------------------------------------------
-        # Torque
-        # -----------------------------------------------------
+        # =========================================================
+        # 3. Update Joint Torque
+        # =========================================================
 
-        for ax, name in zip(
-            self.axes_torque,
-            self.joint_names,
-        ):
-
-            tau = np.asarray(
-                self.torque_history[name]
+        for i, (ax, name) in enumerate(
+            zip(
+                self.axes_torque,
+                self.joint_names,
             )
+        ):
 
             self.torque_lines[name].set_data(
                 t,
-                tau,
+                tau[:, i],
             )
 
             ax.relim()
             ax.autoscale_view()
 
-        # -----------------------------------------------------
-        # Refresh GUI
-        # -----------------------------------------------------
+        # =========================================================
+        # 4. Refresh GUI
+        # =========================================================
 
         self.fig_position.canvas.draw_idle()
         self.fig_torque.canvas.draw_idle()
@@ -314,27 +303,37 @@ def with_joint_plots(base_viewer_class):
 
             self._last_plot_update = 0.0
 
-        def run(self, num_steps=None, catch_sigint=True):
-
-            max_steps = int(
-                20.0 / float(self.env.unwrapped.step_dt)
-            )
-
-            return super().run(
-                num_steps=max_steps,
-                catch_sigint=catch_sigint,
-            )
-
         # -----------------------------------------------------
         # Ghi dữ liệu sau mỗi environment step
         # -----------------------------------------------------
 
         def _execute_step(self):
 
+            # Đã đủ 20 s -> không step thêm
+            if (
+                self._joint_plotter.sample_count
+                >= self._joint_plotter.max_samples
+            ):
+                self.pause()
+                return False
+
             success = super()._execute_step()
 
             if success:
+
+                # Lấy đúng 1 mẫu cho mỗi action step
                 self._joint_plotter.record()
+
+                # Đủ 1000 mẫu = 20 s
+                if (
+                    self._joint_plotter.sample_count
+                    >= self._joint_plotter.max_samples
+                ):
+                    # Vẽ lần cuối đầy đủ 1000 mẫu
+                    self._joint_plotter.update()
+
+                    # Dừng simulation nhưng giữ GUI
+                    self.pause()
 
             return success
 
@@ -348,7 +347,7 @@ def with_joint_plots(base_viewer_class):
 
             now = time.perf_counter()
 
-            if now - self._last_plot_update >= 0.1:
+            if now - self._last_plot_update >= 0.2:
 
                 self._joint_plotter.update()
 
