@@ -1,4 +1,5 @@
 import math
+import torch
 
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs import mdp
@@ -25,15 +26,107 @@ from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 from standing.rewards import ankle_passive_soft_limit_penalty
 
 
-class StandingBodyImpulse(mdp.apply_body_impulse):
-    def __init__(self, cfg, env):
-        super().__init__(cfg, env)
+class StandingBodyImpulse(
+    mdp.apply_body_impulse
+):
 
-        self._viz_cfg = mdp.apply_body_impulse.VizCfg(
-            rgba=(0.9, 0.2, 0.8, 0.9),
-            scale=0.02,
-            width=0.02,
-            min_force=1.0,
+    def __init__(
+        self,
+        cfg,
+        env,
+    ):
+        super().__init__(
+            cfg,
+            env,
+        )
+
+        self._viz_cfg = (
+            mdp.apply_body_impulse.VizCfg(
+                rgba=(0.9, 0.2, 0.8, 0.9),
+                scale=0.02,
+                width=0.02,
+                min_force=1.0,
+            )
+        )
+
+    def __call__(
+        self,
+        env,
+        env_ids,
+        force_direction=None,
+        **kwargs,
+    ):
+
+        # Giữ nguyên toàn bộ lifecycle
+        # cooldown -> impulse -> expire
+        super().__call__(
+            env,
+            env_ids,
+            **kwargs,
+        )
+
+        # None = giữ cách random hướng như khi training
+        if force_direction is None:
+            return
+
+        active_ids = self._active.nonzero(
+            as_tuple=False
+        ).squeeze(-1)
+
+        if len(active_ids) == 0:
+            return
+
+        direction = torch.tensor(
+            force_direction,
+            device=self._device,
+            dtype=torch.float32,
+        )
+
+        direction_norm = (
+            torch.linalg.vector_norm(
+                direction
+            )
+        )
+
+        if direction_norm < 1e-8:
+            raise ValueError(
+                "force_direction không được bằng 0."
+            )
+
+        direction = (
+            direction
+            / direction_norm
+        )
+
+        force_range = kwargs[
+            "force_range"
+        ]
+
+        force_magnitude = max(
+            abs(force_range[0]),
+            abs(force_range[1]),
+        )
+
+        forces = (
+            direction
+            .view(1, 1, 3)
+            .expand(
+                len(active_ids),
+                self._num_bodies,
+                3,
+            )
+            * force_magnitude
+        )
+
+        torques = torch.zeros_like(
+            forces
+        )
+
+        self._asset.write_external_wrench_to_sim(
+            forces,
+            torques,
+            env_ids=active_ids,
+            body_ids=self._body_ids,
         )
 
 def standing_env_cfg() -> ManagerBasedRlEnvCfg:

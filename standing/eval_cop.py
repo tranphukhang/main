@@ -17,6 +17,15 @@ from standing.joint_plotter import JointPlotter
 
 def main():
 
+    IMPULSE_DIRECTION = "x+"
+
+    direction_map = {
+        "x+": (1.0, 0.0, 0.0),
+        "x-": (-1.0, 0.0, 0.0),
+        "y+": (0.0, 1.0, 0.0),
+        "y-": (0.0, -1.0, 0.0),
+    }
+
     # =========================================================
     # 1. Checkpoint
     # =========================================================
@@ -39,6 +48,20 @@ def main():
     # =========================================================
 
     env_cfg = standing_env_cfg()
+
+    if IMPULSE_DIRECTION not in direction_map:
+        raise ValueError(
+            f"Hướng xung lực không hợp lệ: "
+            f"{IMPULSE_DIRECTION}"
+        )
+
+    env_cfg.events[
+        "body_impulse"
+    ].params[
+        "force_direction"
+    ] = direction_map[
+        IMPULSE_DIRECTION
+    ]
 
     env_cfg.scene.num_envs = 1
     env_cfg.episode_length_s = 8.0
