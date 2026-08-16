@@ -11,6 +11,7 @@ from standing.support_polygon import (
     compute_support_polygons,
     create_support_polygon_animation,
 )
+from standing.cop import compute_cop
 
 
 class JointPlotter:
@@ -301,6 +302,34 @@ class JointPlotter:
             .numpy()
         )
 
+        # =====================================================
+        # Tính COP
+        # =====================================================
+
+        cop, total_normal_force = compute_cop(
+            self.env.sim.mj_model,
+            contact_pos,
+            contact_geom,
+            contact_normal_force,
+            nacon,
+            min_normal_force=1.0,
+        )
+
+        valid_cop = np.isfinite(
+            cop[:, 0]
+        ) & np.isfinite(
+            cop[:, 1]
+        )
+
+        num_valid_cop = np.sum(
+            valid_cop
+        )
+
+        print(
+            f"COP valid: "
+            f"{num_valid_cop}/{n} samples"
+        )
+
         qpos = (
             self.qpos_buffer[:n]
             .detach()
@@ -389,6 +418,8 @@ class JointPlotter:
                 t,
                 q,
                 tau,
+                cop,
+                total_normal_force,
             )
         )
 
@@ -402,6 +433,12 @@ class JointPlotter:
         header += [
             f"{name}_torque_Nm"
             for name in self.joint_names
+        ]
+
+        header += [
+            "cop_x_m",
+            "cop_y_m",
+            "total_normal_force_N",
         ]
 
         csv_path = (
