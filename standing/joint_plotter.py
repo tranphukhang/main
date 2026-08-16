@@ -269,6 +269,34 @@ class JointPlotter:
             .numpy()
         )
 
+        contact_pos = (
+            self.contact_pos_buffer[:n]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+        contact_geom = (
+            self.contact_geom_buffer[:n]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+        contact_normal_force = (
+            self.contact_normal_force_buffer[:n]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+        nacon = (
+            self.nacon_buffer[:n]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
         qpos = (
             self.qpos_buffer[:n]
             .detach()
@@ -282,7 +310,11 @@ class JointPlotter:
 
         support_polygons = compute_support_polygons(
             self.env.sim.mj_model,
-            qpos,
+            contact_pos,
+            contact_geom,
+            contact_normal_force,
+            nacon,
+            min_normal_force=1.0,
         )
 
         num_valid = sum(

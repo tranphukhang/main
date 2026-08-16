@@ -85,19 +85,12 @@ def convex_hull_2d(points):
 
 def compute_support_polygons(
     mj_model,
-    qpos_history,
+    contact_pos_history,
+    contact_geom_history,
+    normal_force_history,
+    nacon_history,
+    min_normal_force=1.0,
 ):
-    """
-    Dựng lại contact từ qpos và tính support polygon
-    cho từng thời điểm.
-
-    Return:
-        polygons[k] = support polygon tại sample k
-    """
-
-    # =========================================================
-    # 1. Tìm ID
-    # =========================================================
 
     floor_geom_id = mujoco.mj_name2id(
         mj_model,
@@ -117,58 +110,49 @@ def compute_support_polygons(
         "robot/feet_right",
     )
 
-    if floor_geom_id < 0:
-        raise RuntimeError(
-            "Không tìm thấy geom 'terrain'."
-        )
-
-    if left_foot_body_id < 0:
-        raise RuntimeError(
-            "Không tìm thấy body 'robot/feet_left'."
-        )
-
-    if right_foot_body_id < 0:
-        raise RuntimeError(
-            "Không tìm thấy body 'robot/feet_right'."
-        )
-
-    # =========================================================
-    # 2. MjData riêng để replay offline
-    # =========================================================
-
-    data = mujoco.MjData(mj_model)
-
     polygons = []
 
-    # =========================================================
-    # 3. Replay từng qpos
-    # =========================================================
+    num_samples = len(
+        contact_pos_history
+    )
 
-    for qpos in qpos_history:
-
-        data.qpos[:] = qpos
-        data.qvel[:] = 0.0
-
-        # Tính lại kinematics + collision/contact
-        mujoco.mj_forward(
-            mj_model,
-            data,
-        )
+    for k in range(num_samples):
 
         contact_points = []
 
-        # =====================================================
-        # 4. Lấy contact chân <-> floor
-        # =====================================================
+        # Chỉ duyệt số contact thực sự active
+        ncon = int(
+            nacon_history[k]
+        )
 
-        for j in range(data.ncon):
+        for j in range(ncon):
 
-            contact = data.contact[j]
+            geom1 = int(
+                contact_geom_history[
+                    k, j, 0
+                ]
+            )
 
-            geom1 = contact.geom1
-            geom2 = contact.geom2
+            geom2 = int(
+                contact_geom_history[
+                    k, j, 1
+                ]
+            )
 
-            # Chỉ xét contact với floor
+            normal_force = float(
+                normal_force_history[
+                    k, j
+                ]
+            )
+
+            # Bỏ contact có lực quá nhỏ
+            if (
+                normal_force
+                <= min_normal_force
+            ):
+                continue
+
+            # Chỉ xét chân <-> terrain
             if geom1 == floor_geom_id:
                 foot_geom = geom2
 
@@ -178,32 +162,36 @@ def compute_support_polygons(
             else:
                 continue
 
-            # Body chứa geom đang contact với floor
-            body_id = mj_model.geom_bodyid[
-                foot_geom
-            ]
+            if foot_geom < 0:
+                continue
 
-            # Chỉ nhận contact của hai bàn chân
+            body_id = int(
+                mj_model.geom_bodyid[
+                    foot_geom
+                ]
+            )
+
             if body_id not in (
                 left_foot_body_id,
                 right_foot_body_id,
             ):
                 continue
 
-            # Contact position trong world frame
             contact_points.append(
-                contact.pos[:2].copy()
+                contact_pos_history[
+                    k,
+                    j,
+                    :2,
+                ].copy()
             )
-
-        # =====================================================
-        # 5. Convex hull = support polygon
-        # =====================================================
 
         polygon = convex_hull_2d(
             contact_points
         )
 
-        polygons.append(polygon)
+        polygons.append(
+            polygon
+        )
 
     return polygons
 
