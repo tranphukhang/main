@@ -7,6 +7,7 @@ from mjlab.tasks.registry import register_mjlab_task
 from standing.standing_env_cfg import standing_env_cfg
 from standing.ppo_cfg import standing_ppo_runner_cfg
 from standing.eval_native_viewer import CopEvalNativeViewer
+from standing.joint_plotter import with_joint_plots
 
 
 TASK_ID = "Mjlab-Standing-COP-Eval"
@@ -68,7 +69,17 @@ def main():
         viewer="native",
     )
 
-    play_script.NativeMujocoViewer = CopEvalNativeViewer
+    # Native viewer hiện tại:
+    #   - robot
+    #   - contact point
+    #   - contact force
+    #
+    # Sau đó gắn thêm joint plots
+    EvalNativeViewer = with_joint_plots(
+        CopEvalNativeViewer
+    )
+
+    play_script.NativeMujocoViewer = EvalNativeViewer
 
     play_script.run_play(
         TASK_ID,
