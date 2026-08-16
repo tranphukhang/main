@@ -169,6 +169,7 @@ def plot_cop_position(
     cop_history,
     time_history,
     support_polygons,
+    impulse_active,
     output_path,
 ):
 
@@ -303,6 +304,35 @@ def plot_cop_position(
             )
 
     # =========================================================
+    # Xác định các khoảng external impulse
+    # =========================================================
+
+    active = impulse_active.astype(
+        np.int8
+    )
+
+    padded = np.pad(
+        active,
+        (1, 1),
+        constant_values=0,
+    )
+
+    changes = np.diff(
+        padded
+    )
+
+    impulse_starts = np.where(
+        changes == 1
+    )[0]
+
+    impulse_ends = (
+        np.where(
+            changes == -1
+        )[0]
+        - 1
+    )
+
+    # =========================================================
     # 3. Figure
     # =========================================================
 
@@ -332,6 +362,25 @@ def plot_cop_position(
         linewidth=1.0,
         label="COP X",
     )
+
+    for i, (start, end) in enumerate(
+        zip(
+            impulse_starts,
+            impulse_ends,
+        )
+    ):
+
+        axes[0].axvspan(
+            time_history[start],
+            time_history[end],
+            color="red",
+            alpha=0.30,
+            label=(
+                "External impulse"
+                if i == 0
+                else None
+            ),
+        )
 
     axes[0].axhline(
         0.0,
@@ -368,6 +417,25 @@ def plot_cop_position(
         linewidth=1.0,
         label="COP Y",
     )
+
+    for i, (start, end) in enumerate(
+        zip(
+            impulse_starts,
+            impulse_ends,
+        )
+    ):
+
+        axes[1].axvspan(
+            time_history[start],
+            time_history[end],
+            color="red",
+            alpha=0.30,
+            label=(
+                "External impulse"
+                if i == 0
+                else None
+            ),
+        )
 
     axes[1].axhline(
         0.0,

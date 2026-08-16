@@ -459,6 +459,7 @@ class JointPlotter:
             cop_history=cop,
             time_history=t,
             support_polygons=support_polygons,
+            impulse_active=impulse_active,
             output_path=cop_position_path,
         )
 
@@ -547,6 +548,8 @@ class JointPlotter:
             ax.set_ylabel("Position [rad]")
             ax.grid(True)
 
+            ax.legend()
+
         self.fig_position.savefig(
             output_dir
             / "joint_position.png",
@@ -590,6 +593,8 @@ class JointPlotter:
             ax.set_xlabel("Time [s]")
             ax.set_ylabel("Torque [N.m]")
             ax.grid(True)
+
+            ax.legend()
 
         self.fig_torque.savefig(
             output_dir
@@ -668,7 +673,8 @@ class JointPlotter:
             ax.axvspan(
                 t[start],
                 t[end],
-                alpha=0.15,
+                color="red",
+                alpha=0.30,
                 label=(
                     "External impulse"
                     if i == 0
