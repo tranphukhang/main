@@ -41,7 +41,7 @@ def main():
     env_cfg = standing_env_cfg()
 
     env_cfg.scene.num_envs = 1
-    env_cfg.episode_length_s = 12.0
+    env_cfg.episode_length_s = 8.0
 
     # Không reset vì timeout
     env_cfg.terminations.pop(
@@ -95,7 +95,7 @@ def main():
     )
 
     num_steps = int(
-        12.0 / env.step_dt
+        8.0 / env.step_dt
     )
 
     print(
@@ -114,7 +114,7 @@ def main():
         # Bắt đầu record ngay step 0
         step_trigger=lambda step: step == 0,
 
-        # 600 frame
+        # 400 frame
         video_length=num_steps,
 
         name_prefix="standing_eval",
@@ -181,7 +181,7 @@ def main():
 
                 env.step(actions)
 
-        # Sau 12 s mới xử lý dữ liệu
+        # Sau 8 s mới xử lý dữ liệu
         logger.finalize()
 
     finally:

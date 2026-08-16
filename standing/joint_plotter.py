@@ -49,7 +49,7 @@ class JointPlotter:
         )
 
         self.max_samples = int(
-            12.0 / self.physics_dt
+            8.0 / self.physics_dt
         )
 
         self.sample_count = 0
@@ -708,7 +708,7 @@ def with_joint_plots(base_viewer_class):
         
                 super().run(
                     num_steps=int(
-                        12.0 / self.env.unwrapped.step_dt
+                        8.0 / self.env.unwrapped.step_dt
                     ),
                     catch_sigint=catch_sigint,
                 )
