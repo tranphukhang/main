@@ -44,6 +44,9 @@ def main():
     # Cho episode dài hơn để quan sát
     eval_env_cfg.episode_length_s = 20.0
 
+    # Evaluation tự dừng ở 20 s, không dùng timeout để auto-reset
+    eval_env_cfg.terminations.pop("time_out", None)
+
     # Giữ xung lực lặp lại mỗi 4 giây để test trước
     eval_env_cfg.events["body_impulse"].params[
         "cooldown_s"

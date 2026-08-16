@@ -314,6 +314,17 @@ def with_joint_plots(base_viewer_class):
 
             self._last_plot_update = 0.0
 
+        def run(self, num_steps=None, catch_sigint=True):
+
+            max_steps = int(
+                20.0 / float(self.env.unwrapped.step_dt)
+            )
+
+            return super().run(
+                num_steps=max_steps,
+                catch_sigint=catch_sigint,
+            )
+
         # -----------------------------------------------------
         # Ghi dữ liệu sau mỗi environment step
         # -----------------------------------------------------
