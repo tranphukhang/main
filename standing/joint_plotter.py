@@ -34,9 +34,9 @@ class JointPlotter:
 
         self.step_dt = float(env.step_dt)
 
-        # 20 s × 50 Hz = 1000 samples
+        # 12 s × 50 Hz = 600 samples
         self.max_samples = int(
-            20.0 / self.step_dt
+            12.0 / self.step_dt
         )
 
         self.sample_count = 0

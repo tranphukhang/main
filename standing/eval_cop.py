@@ -42,7 +42,7 @@ def main():
     eval_env_cfg.scene.num_envs = 1
 
     # Cho episode dài hơn để quan sát
-    eval_env_cfg.episode_length_s = 20.0
+    eval_env_cfg.episode_length_s = 12.0
 
     # Evaluation tự dừng ở 20 s, không dùng timeout để auto-reset
     eval_env_cfg.terminations.pop("time_out", None)
