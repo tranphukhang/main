@@ -266,11 +266,7 @@ class JointPlotter:
 
     def clear(self):
 
-        self.time_history.clear()
-
-        for name in self.joint_names:
-            self.position_history[name].clear()
-            self.torque_history[name].clear()
+        self.sample_count = 0
 
     # =========================================================
     # CLOSE
@@ -338,7 +334,7 @@ def with_joint_plots(base_viewer_class):
             return success
 
         # -----------------------------------------------------
-        # Update GUI plot khoảng 10 Hz
+        # Update GUI plot khoảng 5 Hz
         # -----------------------------------------------------
 
         def sync_env_to_viewer(self):
