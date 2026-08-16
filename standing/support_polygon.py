@@ -197,6 +197,7 @@ def compute_support_polygons(
 def create_support_polygon_animation(
     polygons,
     time_history,
+    cop_history,
 ):
 
     # =========================================================
@@ -267,6 +268,18 @@ def create_support_polygon_animation(
         "o",
     )
 
+    # Điểm COP
+    cop_plot, = ax.plot(
+        [],
+        [],
+        "x",
+        markersize=10,
+        markeredgewidth=2,
+        label="COP",
+    )
+
+    ax.legend()
+
     # =========================================================
     # 3. Update từng frame
     # =========================================================
@@ -301,6 +314,21 @@ def create_support_polygon_animation(
                 [],
             )
 
+        cop = cop_history[frame]
+
+        if np.all(
+            np.isfinite(cop)
+        ):
+            cop_plot.set_data(
+                [cop[0]],
+                [cop[1]],
+            )
+        else:
+            cop_plot.set_data(
+                [],
+                [],
+            )
+
         ax.set_title(
             f"Support Polygon - "
             f"t = {time_history[frame]:.2f} s"
@@ -309,6 +337,7 @@ def create_support_polygon_animation(
         return (
             polygon_patch,
             vertices_plot,
+            cop_plot,
         )
 
     # =========================================================

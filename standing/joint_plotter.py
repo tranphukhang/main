@@ -388,12 +388,17 @@ class JointPlotter:
             ::video_stride
         ]
 
+        video_cop = cop[
+            ::video_stride
+        ]
+
         (
             self.fig_support,
             self.support_animation,
         ) = create_support_polygon_animation(
             video_polygons,
             video_time,
+            video_cop,
         )
 
         # =====================================================
