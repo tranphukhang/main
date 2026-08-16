@@ -163,6 +163,8 @@ def main():
         env_idx=0,
     )
 
+    logger.install_physics_hook()
+
     # =========================================================
     # 10. Headless simulation
     # =========================================================
@@ -179,13 +181,11 @@ def main():
 
                 env.step(actions)
 
-                logger.record()
-
         # Sau 12 s mới xử lý dữ liệu
         logger.finalize()
 
     finally:
-
+        logger.remove_physics_hook()
         env.close()
 
     print("Evaluation finished.")

@@ -41,11 +41,12 @@ class JointPlotter:
         # 2. Thông số lấy mẫu
         # =====================================================
 
-        self.step_dt = float(env.step_dt)
+        self.physics_dt = float(
+            env.physics_dt
+        )
 
-        # 12 s × 50 Hz = 600 samples
         self.max_samples = int(
-            12.0 / self.step_dt
+            12.0 / self.physics_dt
         )
 
         self.sample_count = 0
@@ -152,8 +153,11 @@ class JointPlotter:
 
         # Time nằm trên CPU
         self.time_buffer = (
-            np.arange(1, self.max_samples + 1)
-            * self.step_dt
+            np.arange(
+                1,
+                self.max_samples + 1,
+            )
+            * self.physics_dt
         )
 
         # Figure chỉ được tạo sau khi simulation kết thúc
@@ -475,6 +479,35 @@ class JointPlotter:
 
 
         plt.close(self.fig_torque)
+
+    def install_physics_hook(self):
+
+        self._original_scene_update = (
+            self.env.scene.update
+        )
+
+        def update_and_record(dt):
+
+            self._original_scene_update(
+                dt
+            )
+
+            self.record()
+
+        self.env.scene.update = (
+            update_and_record
+        )
+
+
+    def remove_physics_hook(self):
+
+        if hasattr(
+            self,
+            "_original_scene_update",
+        ):
+            self.env.scene.update = (
+                self._original_scene_update
+            )
 
 
 # =============================================================
