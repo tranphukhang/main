@@ -13,7 +13,7 @@ from standing.support_polygon import (
 )
 from standing.cop import (
     compute_cop,
-    plot_cop_trajectory,
+    plot_cop_position,
 )
 
 class JointPlotter:
@@ -416,16 +416,16 @@ class JointPlotter:
             exist_ok=True,
         )
 
-        cop_trajectory_path = (
+        cop_position_path = (
             output_dir
-            / "cop_trajectory.png"
+            / "cop_position.png"
         )
 
-        plot_cop_trajectory(
+        plot_cop_position(
             cop_history=cop,
             time_history=t,
             support_polygons=support_polygons,
-            output_path=cop_trajectory_path,
+            output_path=cop_position_path,
         )
 
         # -----------------------------------------------------
