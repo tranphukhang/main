@@ -1,4 +1,4 @@
-import time
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,13 +8,6 @@ from robot_cfg import ACTUATED_JOINTS
 
 
 class JointPlotter:
-    """
-    Thu thập và hiển thị:
-        - Joint position [rad]
-        - Actuator torque [N.m]
-
-    Mỗi joint có một subplot riêng.
-    """
 
     def __init__(self, env, env_idx=0):
 
@@ -24,7 +17,7 @@ class JointPlotter:
         self.robot = env.scene["robot"]
 
         # =====================================================
-        # 1. Lấy đúng 8 joint chủ động
+        # 1. Lấy 8 joint chủ động
         # =====================================================
 
         joint_ids, joint_names = self.robot.find_joints(
@@ -36,24 +29,28 @@ class JointPlotter:
         self.joint_names = joint_names
 
         # =====================================================
-        # 2. Bộ nhớ dữ liệu
+        # 2. Thông số lấy mẫu
         # =====================================================
 
         self.step_dt = float(env.step_dt)
 
-        # 20 s × 50 Hz = 1000 mẫu
+        # 20 s × 50 Hz = 1000 samples
         self.max_samples = int(
             20.0 / self.step_dt
         )
 
         self.sample_count = 0
+        self.finalized = False
 
         num_joints = len(self.joint_names)
 
         device = self.robot.data.joint_pos.device
         dtype = self.robot.data.joint_pos.dtype
 
-        # Buffer nằm trên GPU
+        # =====================================================
+        # 3. GPU buffers
+        # =====================================================
+
         self.position_buffer = torch.empty(
             (self.max_samples, num_joints),
             device=device,
@@ -66,89 +63,18 @@ class JointPlotter:
             dtype=dtype,
         )
 
-        # Time không cần đọc từ GPU
+        # Time nằm trên CPU
         self.time_buffer = (
             np.arange(1, self.max_samples + 1)
             * self.step_dt
         )
 
-        # =====================================================
-        # 3. Khởi tạo GUI
-        # =====================================================
-
-        plt.ion()
-
-        self._create_position_gui()
-        self._create_torque_gui()
-
-        plt.show(block=False)
+        # Figure chỉ được tạo sau khi simulation kết thúc
+        self.fig_position = None
+        self.fig_torque = None
 
     # =========================================================
-    # POSITION GUI
-    # =========================================================
-
-    def _create_position_gui(self):
-
-        self.fig_position, axes = plt.subplots(
-            4,
-            2,
-            figsize=(12, 9),
-            num="Joint Position",
-            constrained_layout=True,
-        )
-
-        self.axes_position = axes.flatten()
-
-        self.position_lines = {}
-
-        for ax, name in zip(
-            self.axes_position,
-            self.joint_names,
-        ):
-
-            line, = ax.plot([], [])
-
-            self.position_lines[name] = line
-
-            ax.set_title(name)
-            ax.set_xlabel("Time [s]")
-            ax.set_ylabel("Position [rad]")
-            ax.grid(True)
-
-    # =========================================================
-    # TORQUE GUI
-    # =========================================================
-
-    def _create_torque_gui(self):
-
-        self.fig_torque, axes = plt.subplots(
-            4,
-            2,
-            figsize=(12, 9),
-            num="Joint Torque",
-            constrained_layout=True,
-        )
-
-        self.axes_torque = axes.flatten()
-
-        self.torque_lines = {}
-
-        for ax, name in zip(
-            self.axes_torque,
-            self.joint_names,
-        ):
-
-            line, = ax.plot([], [])
-
-            self.torque_lines[name] = line
-
-            ax.set_title(name)
-            ax.set_xlabel("Time [s]")
-            ax.set_ylabel("Torque [N.m]")
-            ax.grid(True)
-
-    # =========================================================
-    # GHI DỮ LIỆU
+    # RECORD DATA - gọi ở 50 Hz
     # =========================================================
 
     def record(self):
@@ -177,25 +103,32 @@ class JointPlotter:
         self.sample_count += 1
 
     # =========================================================
-    # UPDATE GUI
+    # FINALIZE - chỉ gọi 1 lần sau 20 s
     # =========================================================
 
-    def update(self):
+    def finalize(self):
 
-        # Số mẫu hiện có
-        n = self.sample_count
-
-        if n < 2:
+        if self.finalized:
             return
 
-        # =========================================================
-        # 1. Lấy dữ liệu để vẽ
-        # =========================================================
+        if self.sample_count == 0:
+            return
 
-        # Time đã nằm trên CPU
+        self.finalized = True
+
+        n = self.sample_count
+
+        print(
+            f"Simulation finished: "
+            f"{n} samples collected."
+        )
+
+        # =====================================================
+        # 1. GPU -> CPU chỉ một lần
+        # =====================================================
+
         t = self.time_buffer[:n]
 
-        # Chỉ chuyển GPU -> CPU khi cần update GUI
         q = (
             self.position_buffer[:n]
             .detach()
@@ -210,76 +143,139 @@ class JointPlotter:
             .numpy()
         )
 
-        # =========================================================
-        # 2. Update Joint Position
-        # =========================================================
+        # =====================================================
+        # 2. Lưu data
+        # =====================================================
 
-        for i, (ax, name) in enumerate(
-            zip(
-                self.axes_position,
-                self.joint_names,
+        output_dir = Path(
+            "logs/standing_eval"
+        )
+
+        output_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        # -----------------------------------------------------
+        # CSV
+        # -----------------------------------------------------
+
+        data = np.column_stack(
+            (
+                t,
+                q,
+                tau,
             )
+        )
+
+        header = ["time_s"]
+
+        header += [
+            f"{name}_position_rad"
+            for name in self.joint_names
+        ]
+
+        header += [
+            f"{name}_torque_Nm"
+            for name in self.joint_names
+        ]
+
+        csv_path = (
+            output_dir
+            / "joint_data.csv"
+        )
+
+        np.savetxt(
+            csv_path,
+            data,
+            delimiter=",",
+            header=",".join(header),
+            comments="",
+        )
+
+        print(
+            f"Joint data saved to: {csv_path}"
+        )
+
+        # =====================================================
+        # 3. Plot joint position
+        # =====================================================
+
+        self.fig_position, axes = plt.subplots(
+            4,
+            2,
+            figsize=(12, 9),
+            num="Joint Position",
+            constrained_layout=True,
+        )
+
+        axes = axes.flatten()
+
+        for i, name in enumerate(
+            self.joint_names
         ):
 
-            self.position_lines[name].set_data(
+            ax = axes[i]
+
+            ax.plot(
                 t,
                 q[:, i],
             )
 
-            ax.relim()
-            ax.autoscale_view()
+            ax.set_title(name)
+            ax.set_xlabel("Time [s]")
+            ax.set_ylabel("Position [rad]")
+            ax.grid(True)
 
-        # =========================================================
-        # 3. Update Joint Torque
-        # =========================================================
+        self.fig_position.savefig(
+            output_dir
+            / "joint_position.png",
+            dpi=150,
+        )
 
-        for i, (ax, name) in enumerate(
-            zip(
-                self.axes_torque,
-                self.joint_names,
-            )
+        # =====================================================
+        # 4. Plot joint torque
+        # =====================================================
+
+        self.fig_torque, axes = plt.subplots(
+            4,
+            2,
+            figsize=(12, 9),
+            num="Joint Torque",
+            constrained_layout=True,
+        )
+
+        axes = axes.flatten()
+
+        for i, name in enumerate(
+            self.joint_names
         ):
 
-            self.torque_lines[name].set_data(
+            ax = axes[i]
+
+            ax.plot(
                 t,
                 tau[:, i],
             )
 
-            ax.relim()
-            ax.autoscale_view()
+            ax.set_title(name)
+            ax.set_xlabel("Time [s]")
+            ax.set_ylabel("Torque [N.m]")
+            ax.grid(True)
 
-        # =========================================================
-        # 4. Refresh GUI
-        # =========================================================
+        self.fig_torque.savefig(
+            output_dir
+            / "joint_torque.png",
+            dpi=150,
+        )
 
-        self.fig_position.canvas.draw_idle()
-        self.fig_torque.canvas.draw_idle()
-
-        self.fig_position.canvas.flush_events()
-        self.fig_torque.canvas.flush_events()
-
+        # Hiển thị sau khi simulation đã dừng
+        plt.show(block=False)
         plt.pause(0.001)
-
-    # =========================================================
-    # CLEAR
-    # =========================================================
-
-    def clear(self):
-
-        self.sample_count = 0
-
-    # =========================================================
-    # CLOSE
-    # =========================================================
-
-    def close(self):
-
-        plt.close(self.fig_position)
-        plt.close(self.fig_torque)
 
 
 # =============================================================
-# Gắn JointPlotter vào một Native Viewer bất kỳ
+# Gắn logger vào Native Viewer
 # =============================================================
 
 def with_joint_plots(base_viewer_class):
@@ -288,75 +284,76 @@ def with_joint_plots(base_viewer_class):
 
         def setup(self):
 
-            # Setup Native Viewer trước
             super().setup()
 
-            # Sau đó tạo Joint Plotter
             self._joint_plotter = JointPlotter(
                 env=self.env.unwrapped,
                 env_idx=self.env_idx,
             )
 
-            self._last_plot_update = 0.0
-
-        # -----------------------------------------------------
-        # Ghi dữ liệu sau mỗi environment step
-        # -----------------------------------------------------
+        # =====================================================
+        # Mỗi action step -> lưu 1 mẫu
+        # =====================================================
 
         def _execute_step(self):
 
-            # Đã đủ 20 s -> không step thêm
+            # Đã đủ 20 s
             if (
                 self._joint_plotter.sample_count
                 >= self._joint_plotter.max_samples
             ):
+
+                self._joint_plotter.finalize()
                 self.pause()
+
                 return False
 
             success = super()._execute_step()
 
             if success:
 
-                # Lấy đúng 1 mẫu cho mỗi action step
+                # Sampling đúng theo action = 50 Hz
                 self._joint_plotter.record()
 
-                # Đủ 1000 mẫu = 20 s
+                # Đủ 1000 samples = 20 s
                 if (
                     self._joint_plotter.sample_count
                     >= self._joint_plotter.max_samples
                 ):
-                    # Vẽ lần cuối đầy đủ 1000 mẫu
-                    self._joint_plotter.update()
 
-                    # Dừng simulation nhưng giữ GUI
+                    self._joint_plotter.finalize()
+
+                    # Dừng simulation
                     self.pause()
 
             return success
 
-        # -----------------------------------------------------
-        # Update GUI plot khoảng 5 Hz
-        # -----------------------------------------------------
+        # =====================================================
+        # Sau khi kết thúc, chỉ xử lý event của Matplotlib
+        # =====================================================
 
         def sync_env_to_viewer(self):
 
             super().sync_env_to_viewer()
 
-            now = time.perf_counter()
+            if self._joint_plotter.finalized:
+                plt.pause(0.001)
 
-            if now - self._last_plot_update >= 0.2:
-
-                self._joint_plotter.update()
-
-                self._last_plot_update = now
-
-        # -----------------------------------------------------
+        # =====================================================
         # Close
-        # -----------------------------------------------------
+        # =====================================================
 
         def close(self):
 
-            if hasattr(self, "_joint_plotter"):
-                self._joint_plotter.close()
+            if self._joint_plotter.fig_position is not None:
+                plt.close(
+                    self._joint_plotter.fig_position
+                )
+
+            if self._joint_plotter.fig_torque is not None:
+                plt.close(
+                    self._joint_plotter.fig_torque
+                )
 
             super().close()
 
