@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import mujoco_warp as mjwarp
+import warp as wp
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -79,6 +81,75 @@ class JointPlotter:
             dtype=self.env.sim.data.qpos.dtype,
         )
 
+        # =====================================================
+        # Contact data
+        # =====================================================
+
+        self.max_contacts = (
+            self.env.sim.data.contact.pos.shape[0]
+        )
+
+        # Lưu vị trí contact
+        self.contact_pos_buffer = torch.empty(
+            (
+                self.max_samples,
+                self.max_contacts,
+                3,
+            ),
+            device=device,
+            dtype=dtype,
+        )
+
+        # Lưu cặp geom tạo contact
+        self.contact_geom_buffer = torch.empty(
+            (
+                self.max_samples,
+                self.max_contacts,
+                2,
+            ),
+            device=device,
+            dtype=torch.int32,
+        )
+
+        # Lưu normal contact force
+        self.contact_normal_force_buffer = torch.empty(
+            (
+                self.max_samples,
+                self.max_contacts,
+            ),
+            device=device,
+            dtype=dtype,
+        )
+
+        # Số contact thực sự tồn tại tại mỗi sample
+        self.nacon_buffer = torch.empty(
+            self.max_samples,
+            device=device,
+            dtype=torch.int32,
+        )
+
+        # ID của toàn bộ contact slot
+        self.contact_ids_wp = wp.array(
+            np.arange(
+                self.max_contacts,
+                dtype=np.int32,
+            ),
+            dtype=wp.int32,
+            device=self.env.sim.wp_device,
+        )
+
+        # Buffer nhận contact force từ MuJoCo Warp
+        self.contact_force_wp = wp.zeros(
+            self.max_contacts,
+            dtype=wp.spatial_vector,
+            device=self.env.sim.wp_device,
+        )
+
+        # Zero-copy Warp -> PyTorch
+        self.contact_force_torch = wp.to_torch(
+            self.contact_force_wp
+        )
+
         # Time nằm trên CPU
         self.time_buffer = (
             np.arange(1, self.max_samples + 1)
@@ -121,6 +192,38 @@ class JointPlotter:
             self.env.sim.data.qpos[
                 self.env_idx
             ]
+        )
+
+        # =====================================================
+        # Contact force thực tế của simulation
+        # =====================================================
+
+        mjwarp.contact_force(
+            self.env.sim.wp_model,
+            self.env.sim.wp_data,
+            self.contact_ids_wp,
+            False,  # force trong contact frame
+            self.contact_force_wp,
+        )
+
+        # Vị trí contact
+        self.contact_pos_buffer[i].copy_(
+            self.env.sim.data.contact.pos[:]
+        )
+
+        # Cặp geom của contact
+        self.contact_geom_buffer[i].copy_(
+            self.env.sim.data.contact.geom[:]
+        )
+
+        # Thành phần đầu tiên là normal contact force
+        self.contact_normal_force_buffer[i].copy_(
+            self.contact_force_torch[:, 0]
+        )
+
+        # Số contact đang active
+        self.nacon_buffer[i].copy_(
+            self.env.sim.data.nacon[0]
         )
 
         self.sample_count += 1
