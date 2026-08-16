@@ -16,14 +16,21 @@ from standing.cop import (
     plot_cop_position,
 )
 
+
 class JointPlotter:
 
-    def __init__(self, env, env_idx=0):
+    def __init__(
+        self,
+        env,
+        env_idx=0,
+    ):
 
         self.env = env
         self.env_idx = env_idx
 
-        self.robot = env.scene["robot"]
+        self.robot = env.scene[
+            "robot"
+        ]
 
         self.fig_support = None
         self.support_animation = None
@@ -32,9 +39,11 @@ class JointPlotter:
         # 1. Lấy 8 joint chủ động
         # =====================================================
 
-        joint_ids, joint_names = self.robot.find_joints(
-            ACTUATED_JOINTS,
-            preserve_order=True,
+        joint_ids, joint_names = (
+            self.robot.find_joints(
+                ACTUATED_JOINTS,
+                preserve_order=True,
+            )
         )
 
         self.joint_ids = joint_ids
@@ -49,46 +58,89 @@ class JointPlotter:
         )
 
         self.max_samples = int(
-            8.0 / self.physics_dt
+            8.0
+            / self.physics_dt
         )
 
         self.sample_count = 0
         self.finalized = False
 
-        num_joints = len(self.joint_names)
+        num_joints = len(
+            self.joint_names
+        )
 
-        device = self.robot.data.joint_pos.device
-        dtype = self.robot.data.joint_pos.dtype
+        device = (
+            self.robot
+            .data
+            .joint_pos
+            .device
+        )
+
+        dtype = (
+            self.robot
+            .data
+            .joint_pos
+            .dtype
+        )
 
         # =====================================================
         # 3. GPU buffers
         # =====================================================
 
-        self.position_buffer = torch.empty(
-            (self.max_samples, num_joints),
-            device=device,
-            dtype=dtype,
+        self.position_buffer = (
+            torch.empty(
+                (
+                    self.max_samples,
+                    num_joints,
+                ),
+                device=device,
+                dtype=dtype,
+            )
         )
 
-        self.torque_buffer = torch.empty(
-            (self.max_samples, num_joints),
-            device=device,
-            dtype=dtype,
+        self.torque_buffer = (
+            torch.empty(
+                (
+                    self.max_samples,
+                    num_joints,
+                ),
+                device=device,
+                dtype=dtype,
+            )
         )
 
-        self.impulse_active_buffer = torch.empty(
-            self.max_samples,
-            device=device,
-            dtype=torch.bool,
+        self.impulse_active_buffer = (
+            torch.empty(
+                self.max_samples,
+                device=device,
+                dtype=torch.bool,
+            )
         )
 
-        # Full robot configuration để tính contact sau mô phỏng
-        num_qpos = self.env.sim.data.qpos.shape[1]
+        # Full robot configuration
+        num_qpos = (
+            self.env
+            .sim
+            .data
+            .qpos
+            .shape[1]
+        )
 
-        self.qpos_buffer = torch.empty(
-            (self.max_samples, num_qpos),
-            device=device,
-            dtype=self.env.sim.data.qpos.dtype,
+        self.qpos_buffer = (
+            torch.empty(
+                (
+                    self.max_samples,
+                    num_qpos,
+                ),
+                device=device,
+                dtype=(
+                    self.env
+                    .sim
+                    .data
+                    .qpos
+                    .dtype
+                ),
+            )
         )
 
         # =====================================================
@@ -96,71 +148,98 @@ class JointPlotter:
         # =====================================================
 
         self.max_contacts = (
-            self.env.sim.data.contact.pos.shape[0]
+            self.env
+            .sim
+            .data
+            .contact
+            .pos
+            .shape[0]
         )
 
         # Lưu vị trí contact
-        self.contact_pos_buffer = torch.empty(
-            (
-                self.max_samples,
-                self.max_contacts,
-                3,
-            ),
-            device=device,
-            dtype=dtype,
+        self.contact_pos_buffer = (
+            torch.empty(
+                (
+                    self.max_samples,
+                    self.max_contacts,
+                    3,
+                ),
+                device=device,
+                dtype=dtype,
+            )
         )
 
         # Lưu cặp geom tạo contact
-        self.contact_geom_buffer = torch.empty(
-            (
-                self.max_samples,
-                self.max_contacts,
-                2,
-            ),
-            device=device,
-            dtype=torch.int32,
+        self.contact_geom_buffer = (
+            torch.empty(
+                (
+                    self.max_samples,
+                    self.max_contacts,
+                    2,
+                ),
+                device=device,
+                dtype=torch.int32,
+            )
         )
 
         # Lưu normal contact force
-        self.contact_normal_force_buffer = torch.empty(
-            (
+        self.contact_normal_force_buffer = (
+            torch.empty(
+                (
+                    self.max_samples,
+                    self.max_contacts,
+                ),
+                device=device,
+                dtype=dtype,
+            )
+        )
+
+        # Số contact active
+        self.nacon_buffer = (
+            torch.empty(
                 self.max_samples,
+                device=device,
+                dtype=torch.int32,
+            )
+        )
+
+        # ID toàn bộ contact slot
+        self.contact_ids_wp = (
+            wp.array(
+                np.arange(
+                    self.max_contacts,
+                    dtype=np.int32,
+                ),
+                dtype=wp.int32,
+                device=(
+                    self.env
+                    .sim
+                    .wp_device
+                ),
+            )
+        )
+
+        # Buffer contact force MuJoCo Warp
+        self.contact_force_wp = (
+            wp.zeros(
                 self.max_contacts,
-            ),
-            device=device,
-            dtype=dtype,
-        )
-
-        # Số contact thực sự tồn tại tại mỗi sample
-        self.nacon_buffer = torch.empty(
-            self.max_samples,
-            device=device,
-            dtype=torch.int32,
-        )
-
-        # ID của toàn bộ contact slot
-        self.contact_ids_wp = wp.array(
-            np.arange(
-                self.max_contacts,
-                dtype=np.int32,
-            ),
-            dtype=wp.int32,
-            device=self.env.sim.wp_device,
-        )
-
-        # Buffer nhận contact force từ MuJoCo Warp
-        self.contact_force_wp = wp.zeros(
-            self.max_contacts,
-            dtype=wp.spatial_vector,
-            device=self.env.sim.wp_device,
+                dtype=wp.spatial_vector,
+                device=(
+                    self.env
+                    .sim
+                    .wp_device
+                ),
+            )
         )
 
         # Zero-copy Warp -> PyTorch
-        self.contact_force_torch = wp.to_torch(
-            self.contact_force_wp
+        self.contact_force_torch = (
+            wp.to_torch(
+                self.contact_force_wp
+            )
         )
 
-        # Time nằm trên CPU
+        # Time trên CPU
         self.time_buffer = (
             np.arange(
                 1,
@@ -169,74 +248,112 @@ class JointPlotter:
             * self.physics_dt
         )
 
-        # Figure chỉ được tạo sau khi simulation kết thúc
         self.fig_position = None
         self.fig_torque = None
 
     # =========================================================
-    # RECORD DATA - gọi ở 50 Hz
+    # RECORD DATA - physics rate
     # =========================================================
 
     def record(self):
 
-        if self.sample_count >= self.max_samples:
+        if (
+            self.sample_count
+            >= self.max_samples
+        ):
             return
 
         i = self.sample_count
 
+        # =====================================================
         # Joint position
-        self.position_buffer[i].copy_(
+        # =====================================================
+
+        self.position_buffer[
+            i
+        ].copy_(
             self.robot.data.joint_pos[
                 self.env_idx,
                 self.joint_ids,
             ]
         )
 
+        # =====================================================
         # Actuator torque
-        self.torque_buffer[i].copy_(
+        # =====================================================
+
+        self.torque_buffer[
+            i
+        ].copy_(
             self.robot.data.qfrc_actuator[
                 self.env_idx,
                 self.joint_ids,
             ]
         )
 
-        # Lưu toàn bộ qpos của robot
-        self.qpos_buffer[i].copy_(
+        # =====================================================
+        # Full qpos
+        # =====================================================
+
+        self.qpos_buffer[
+            i
+        ].copy_(
             self.env.sim.data.qpos[
                 self.env_idx
             ]
         )
 
         # =====================================================
-        # Contact force thực tế của simulation
+        # Contact force thực tế
         # =====================================================
 
         mjwarp.contact_force(
             self.env.sim.wp_model,
             self.env.sim.wp_data,
             self.contact_ids_wp,
-            False,  # force trong contact frame
+            False,
             self.contact_force_wp,
         )
 
         # Vị trí contact
-        self.contact_pos_buffer[i].copy_(
-            self.env.sim.data.contact.pos[:]
+        self.contact_pos_buffer[
+            i
+        ].copy_(
+            self.env
+            .sim
+            .data
+            .contact
+            .pos[:]
         )
 
-        # Cặp geom của contact
-        self.contact_geom_buffer[i].copy_(
-            self.env.sim.data.contact.geom[:]
+        # Cặp geom contact
+        self.contact_geom_buffer[
+            i
+        ].copy_(
+            self.env
+            .sim
+            .data
+            .contact
+            .geom[:]
         )
 
-        # Thành phần đầu tiên là normal contact force
-        self.contact_normal_force_buffer[i].copy_(
-            self.contact_force_torch[:, 0]
+        # Normal contact force
+        self.contact_normal_force_buffer[
+            i
+        ].copy_(
+            self.contact_force_torch[
+                :,
+                0,
+            ]
         )
 
-        # Số contact đang active
-        self.nacon_buffer[i].copy_(
-            self.env.sim.data.nacon[0]
+        # Số contact active
+        self.nacon_buffer[
+            i
+        ].copy_(
+            self.env.sim.data.nacon[
+                0
+            ]
         )
 
         # =====================================================
@@ -244,26 +361,34 @@ class JointPlotter:
         # =====================================================
 
         external_force = (
-            self.env.sim.data.xfrc_applied[
+            self.env
+            .sim
+            .data
+            .xfrc_applied[
                 self.env_idx,
                 :,
                 0:3,
             ]
         )
 
-        force_norm = torch.linalg.vector_norm(
-            external_force,
-            dim=1,
+        force_norm = (
+            torch.linalg.vector_norm(
+                external_force,
+                dim=1,
+            )
         )
 
-        self.impulse_active_buffer[i] = torch.any(
-            force_norm > 1e-6
+        self.impulse_active_buffer[
+            i
+        ] = torch.any(
+            force_norm
+            > 1e-6
         )
 
         self.sample_count += 1
 
     # =========================================================
-    # FINALIZE - chỉ gọi 1 lần sau 20 s
+    # FINALIZE
     # =========================================================
 
     def finalize(self):
@@ -284,65 +409,84 @@ class JointPlotter:
         )
 
         # =====================================================
-        # 1. GPU -> CPU chỉ một lần
+        # 1. GPU -> CPU
         # =====================================================
 
-        t = self.time_buffer[:n]
+        t = self.time_buffer[
+            :n
+        ]
 
         q = (
-            self.position_buffer[:n]
+            self.position_buffer[
+                :n
+            ]
             .detach()
             .cpu()
             .numpy()
         )
 
         tau = (
-            self.torque_buffer[:n]
+            self.torque_buffer[
+                :n
+            ]
             .detach()
             .cpu()
             .numpy()
         )
 
         impulse_active = (
-            self.impulse_active_buffer[:n]
+            self.impulse_active_buffer[
+                :n
+            ]
             .detach()
             .cpu()
             .numpy()
         )
 
         contact_pos = (
-            self.contact_pos_buffer[:n]
+            self.contact_pos_buffer[
+                :n
+            ]
             .detach()
             .cpu()
             .numpy()
         )
 
         contact_geom = (
-            self.contact_geom_buffer[:n]
+            self.contact_geom_buffer[
+                :n
+            ]
             .detach()
             .cpu()
             .numpy()
         )
 
         contact_normal_force = (
-            self.contact_normal_force_buffer[:n]
+            self.contact_normal_force_buffer[
+                :n
+            ]
             .detach()
             .cpu()
             .numpy()
         )
 
         nacon = (
-            self.nacon_buffer[:n]
+            self.nacon_buffer[
+                :n
+            ]
             .detach()
             .cpu()
             .numpy()
         )
 
         # =====================================================
-        # Tính COP
+        # 2. Tính COP
         # =====================================================
 
-        cop, total_normal_force = compute_cop(
+        (
+            cop,
+            total_normal_force,
+        ) = compute_cop(
             self.env.sim.mj_model,
             contact_pos,
             contact_geom,
@@ -351,10 +495,13 @@ class JointPlotter:
             min_normal_force=1.0,
         )
 
-        valid_cop = np.isfinite(
-            cop[:, 0]
-        ) & np.isfinite(
-            cop[:, 1]
+        valid_cop = (
+            np.isfinite(
+                cop[:, 0]
+            )
+            & np.isfinite(
+                cop[:, 1]
+            )
         )
 
         num_valid_cop = np.sum(
@@ -366,29 +513,25 @@ class JointPlotter:
             f"{num_valid_cop}/{n} samples"
         )
 
-        qpos = (
-            self.qpos_buffer[:n]
-            .detach()
-            .cpu()
-            .numpy()
-        )
-
         # =====================================================
-        # Tính support polygon offline
+        # 3. Tính support polygon offline
         # =====================================================
 
-        support_polygons = compute_support_polygons(
-            self.env.sim.mj_model,
-            contact_pos,
-            contact_geom,
-            contact_normal_force,
-            nacon,
-            min_normal_force=1.0,
+        support_polygons = (
+            compute_support_polygons(
+                self.env.sim.mj_model,
+                contact_pos,
+                contact_geom,
+                contact_normal_force,
+                nacon,
+                min_normal_force=1.0,
+            )
         )
 
         num_valid = sum(
             len(polygon) >= 3
-            for polygon in support_polygons
+            for polygon
+            in support_polygons
         )
 
         print(
@@ -398,7 +541,8 @@ class JointPlotter:
         )
 
         print(
-            "Support polygon sample đầu tiên:"
+            "Support polygon "
+            "sample đầu tiên:"
         )
 
         print(
@@ -406,7 +550,7 @@ class JointPlotter:
         )
 
         # =====================================================
-        # Animation support polygon
+        # 4. Animation support polygon
         # =====================================================
 
         video_stride = int(
@@ -416,9 +560,11 @@ class JointPlotter:
             )
         )
 
-        video_polygons = support_polygons[
-            ::video_stride
-        ]
+        video_polygons = (
+            support_polygons[
+                ::video_stride
+            ]
+        )
 
         video_time = t[
             ::video_stride
@@ -431,14 +577,16 @@ class JointPlotter:
         (
             self.fig_support,
             self.support_animation,
-        ) = create_support_polygon_animation(
-            video_polygons,
-            video_time,
-            video_cop,
+        ) = (
+            create_support_polygon_animation(
+                video_polygons,
+                video_time,
+                video_cop,
+            )
         )
 
         # =====================================================
-        # 2. Lưu data
+        # 5. Output directory
         # =====================================================
 
         output_dir = Path(
@@ -450,6 +598,10 @@ class JointPlotter:
             exist_ok=True,
         )
 
+        # =====================================================
+        # 6. COP position + COP CSV
+        # =====================================================
+
         cop_position_path = (
             output_dir
             / "cop_position.png"
@@ -458,14 +610,20 @@ class JointPlotter:
         plot_cop_position(
             cop_history=cop,
             time_history=t,
-            support_polygons=support_polygons,
-            impulse_active=impulse_active,
-            output_path=cop_position_path,
+            support_polygons=(
+                support_polygons
+            ),
+            impulse_active=(
+                impulse_active
+            ),
+            output_path=(
+                cop_position_path
+            ),
         )
 
-        # -----------------------------------------------------
-        # CSV
-        # -----------------------------------------------------
+        # =====================================================
+        # 7. File CSV tổng hợp cũ
+        # =====================================================
 
         data = np.column_stack(
             (
@@ -477,16 +635,26 @@ class JointPlotter:
             )
         )
 
-        header = ["time_s"]
-
-        header += [
-            f"{name}_position_rad"
-            for name in self.joint_names
+        header = [
+            "time_s"
         ]
 
         header += [
-            f"{name}_torque_Nm"
-            for name in self.joint_names
+            (
+                f"{name}"
+                f"_position_rad"
+            )
+            for name
+            in self.joint_names
+        ]
+
+        header += [
+            (
+                f"{name}"
+                f"_torque_Nm"
+            )
+            for name
+            in self.joint_names
         ]
 
         header += [
@@ -504,19 +672,133 @@ class JointPlotter:
             csv_path,
             data,
             delimiter=",",
-            header=",".join(header),
+            header=",".join(
+                header
+            ),
             comments="",
         )
 
         print(
-            f"Joint data saved to: {csv_path}"
+            f"Joint data saved to: "
+            f"{csv_path}"
         )
 
         # =====================================================
-        # 3. Plot joint position
+        # 8. CSV Joint Position cho MATLAB
         # =====================================================
 
-        self.fig_position, axes = plt.subplots(
+        position_data = (
+            np.column_stack(
+                (
+                    t,
+                    q,
+                    impulse_active.astype(
+                        np.int8
+                    ),
+                )
+            )
+        )
+
+        position_header = [
+            "time_s"
+        ]
+
+        position_header += [
+            (
+                f"{name}"
+                f"_position_rad"
+            )
+            for name
+            in self.joint_names
+        ]
+
+        position_header += [
+            "impulse_active"
+        ]
+
+        position_csv_path = (
+            output_dir
+            / "joint_position_data.csv"
+        )
+
+        np.savetxt(
+            position_csv_path,
+            position_data,
+            delimiter=",",
+            header=",".join(
+                position_header
+            ),
+            comments="",
+        )
+
+        print(
+            f"Joint position data "
+            f"saved to: "
+            f"{position_csv_path}"
+        )
+
+        # =====================================================
+        # 9. CSV Joint Torque cho MATLAB
+        # =====================================================
+
+        torque_data = (
+            np.column_stack(
+                (
+                    t,
+                    tau,
+                    impulse_active.astype(
+                        np.int8
+                    ),
+                )
+            )
+        )
+
+        torque_header = [
+            "time_s"
+        ]
+
+        torque_header += [
+            (
+                f"{name}"
+                f"_torque_Nm"
+            )
+            for name
+            in self.joint_names
+        ]
+
+        torque_header += [
+            "impulse_active"
+        ]
+
+        torque_csv_path = (
+            output_dir
+            / "joint_torque_data.csv"
+        )
+
+        np.savetxt(
+            torque_csv_path,
+            torque_data,
+            delimiter=",",
+            header=",".join(
+                torque_header
+            ),
+            comments="",
+        )
+
+        print(
+            f"Joint torque data "
+            f"saved to: "
+            f"{torque_csv_path}"
+        )
+
+        # =====================================================
+        # 10. Plot joint position
+        # =====================================================
+
+        (
+            self.fig_position,
+            axes,
+        ) = plt.subplots(
             4,
             2,
             figsize=(12, 9),
@@ -543,26 +825,44 @@ class JointPlotter:
                 impulse_active,
             )
 
-            ax.set_title(name)
-            ax.set_xlabel("Time [s]")
-            ax.set_ylabel("Position [rad]")
-            ax.grid(True)
+            ax.set_title(
+                name
+            )
+
+            ax.set_xlabel(
+                "Time [s]"
+            )
+
+            ax.set_ylabel(
+                "Position [rad]"
+            )
+
+            ax.grid(
+                True
+            )
 
             ax.legend()
 
         self.fig_position.savefig(
-            output_dir
-            / "joint_position.png",
+            (
+                output_dir
+                / "joint_position.png"
+            ),
             dpi=150,
         )
 
-        plt.close(self.fig_position)
+        plt.close(
+            self.fig_position
+        )
 
         # =====================================================
-        # 4. Plot joint torque
+        # 11. Plot joint torque
         # =====================================================
 
-        self.fig_torque, axes = plt.subplots(
+        (
+            self.fig_torque,
+            axes,
+        ) = plt.subplots(
             4,
             2,
             figsize=(12, 9),
@@ -589,29 +889,51 @@ class JointPlotter:
                 impulse_active,
             )
 
-            ax.set_title(name)
-            ax.set_xlabel("Time [s]")
-            ax.set_ylabel("Torque [N.m]")
-            ax.grid(True)
+            ax.set_title(
+                name
+            )
+
+            ax.set_xlabel(
+                "Time [s]"
+            )
+
+            ax.set_ylabel(
+                "Torque [N.m]"
+            )
+
+            ax.grid(
+                True
+            )
 
             ax.legend()
 
         self.fig_torque.savefig(
-            output_dir
-            / "joint_torque.png",
+            (
+                output_dir
+                / "joint_torque.png"
+            ),
             dpi=150,
         )
 
+        plt.close(
+            self.fig_torque
+        )
 
-        plt.close(self.fig_torque)
+    # =========================================================
+    # Physics hook
+    # =========================================================
 
-    def install_physics_hook(self):
+    def install_physics_hook(
+        self,
+    ):
 
         self._original_scene_update = (
             self.env.scene.update
         )
 
-        def update_and_record(dt):
+        def update_and_record(
+            dt,
+        ):
 
             self._original_scene_update(
                 dt
@@ -623,16 +945,22 @@ class JointPlotter:
             update_and_record
         )
 
-
-    def remove_physics_hook(self):
+    def remove_physics_hook(
+        self,
+    ):
 
         if hasattr(
             self,
             "_original_scene_update",
         ):
+
             self.env.scene.update = (
                 self._original_scene_update
             )
+
+    # =========================================================
+    # Vùng xung lực trên đồ thị
+    # =========================================================
 
     def add_impulse_regions(
         self,
@@ -641,8 +969,10 @@ class JointPlotter:
         impulse_active,
     ):
 
-        active = impulse_active.astype(
-            np.int8
+        active = (
+            impulse_active.astype(
+                np.int8
+            )
         )
 
         padded = np.pad(
@@ -666,8 +996,14 @@ class JointPlotter:
             - 1
         )
 
-        for i, (start, end) in enumerate(
-            zip(starts, ends)
+        for i, (
+            start,
+            end,
+        ) in enumerate(
+            zip(
+                starts,
+                ends,
+            )
         ):
 
             ax.axvspan(
@@ -687,48 +1023,70 @@ class JointPlotter:
 # Gắn logger vào Native Viewer
 # =============================================================
 
-def with_joint_plots(base_viewer_class):
+def with_joint_plots(
+    base_viewer_class,
+):
 
-    class JointPlotViewer(base_viewer_class):
+    class JointPlotViewer(
+        base_viewer_class
+    ):
 
-        def setup(self):
+        def setup(
+            self,
+        ):
 
             super().setup()
 
-            self._joint_plotter = JointPlotter(
-                env=self.env.unwrapped,
-                env_idx=self.env_idx,
+            self._joint_plotter = (
+                JointPlotter(
+                    env=self.env.unwrapped,
+                    env_idx=self.env_idx,
+                )
             )
 
         def run(
-                self,
-                num_steps=None,
-                catch_sigint=True,
-            ):
-        
-                super().run(
-                    num_steps=int(
-                        8.0 / self.env.unwrapped.step_dt
-                    ),
-                    catch_sigint=catch_sigint,
-                )
+            self,
+            num_steps=None,
+            catch_sigint=True,
+        ):
+
+            super().run(
+                num_steps=int(
+                    8.0
+                    / self.env
+                    .unwrapped
+                    .step_dt
+                ),
+                catch_sigint=(
+                    catch_sigint
+                ),
+            )
 
         # =====================================================
-        # Mỗi action step -> lưu 1 mẫu
+        # Mỗi action step
         # =====================================================
 
-        def _execute_step(self):
+        def _execute_step(
+            self,
+        ):
 
-            success = super()._execute_step()
+            success = (
+                super()
+                ._execute_step()
+            )
 
             if success:
 
                 self._joint_plotter.record()
 
                 if (
-                    self._joint_plotter.sample_count
-                    >= self._joint_plotter.max_samples
+                    self._joint_plotter
+                    .sample_count
+                    >=
+                    self._joint_plotter
+                    .max_samples
                 ):
+
                     self._joint_plotter.finalize()
 
             return success
@@ -737,21 +1095,41 @@ def with_joint_plots(base_viewer_class):
         # Close
         # =====================================================
 
-        def close(self):
+        def close(
+            self,
+        ):
 
-            if self._joint_plotter.fig_position is not None:
+            if (
+                self._joint_plotter
+                .fig_position
+                is not None
+            ):
+
                 plt.close(
-                    self._joint_plotter.fig_position
+                    self._joint_plotter
+                    .fig_position
                 )
 
-            if self._joint_plotter.fig_torque is not None:
+            if (
+                self._joint_plotter
+                .fig_torque
+                is not None
+            ):
+
                 plt.close(
-                    self._joint_plotter.fig_torque
+                    self._joint_plotter
+                    .fig_torque
                 )
 
-            if self._joint_plotter.fig_support is not None:
+            if (
+                self._joint_plotter
+                .fig_support
+                is not None
+            ):
+
                 plt.close(
-                    self._joint_plotter.fig_support
+                    self._joint_plotter
+                    .fig_support
                 )
 
             super().close()

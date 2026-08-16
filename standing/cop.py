@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import mujoco
 import numpy as np
 import matplotlib.pyplot as plt
@@ -165,6 +167,7 @@ def compute_cop(
         total_normal_force,
     )
 
+
 def plot_cop_position(
     cop_history,
     time_history,
@@ -232,7 +235,8 @@ def plot_cop_position(
     )
 
     # =========================================================
-    # 2. Tính vị trí tương đối với tâm support polygon
+    # 2. Tính vị trí tương đối với trung điểm
+    #    của khoảng support theo từng trục
     # =========================================================
 
     for k in range(num_samples):
@@ -293,6 +297,7 @@ def plot_cop_position(
                 cop_history[k]
             )
         ):
+
             cop_x_rel[k] = (
                 cop_history[k, 0]
                 - center_x
@@ -304,7 +309,65 @@ def plot_cop_position(
             )
 
     # =========================================================
-    # Xác định các khoảng external impulse
+    # 3. Lưu dữ liệu COP để vẽ lại trên MATLAB
+    # =========================================================
+
+    output_path = Path(
+        output_path
+    )
+
+    cop_csv_data = np.column_stack(
+        (
+            time_history,
+            cop_history[:, 0],
+            cop_history[:, 1],
+            cop_x_rel,
+            cop_y_rel,
+            x_min_rel,
+            x_max_rel,
+            y_min_rel,
+            y_max_rel,
+            impulse_active.astype(
+                np.int8
+            ),
+        )
+    )
+
+    cop_csv_header = [
+        "time_s",
+        "cop_x_m",
+        "cop_y_m",
+        "cop_x_rel_m",
+        "cop_y_rel_m",
+        "support_x_min_rel_m",
+        "support_x_max_rel_m",
+        "support_y_min_rel_m",
+        "support_y_max_rel_m",
+        "impulse_active",
+    ]
+
+    cop_csv_path = (
+        output_path.parent
+        / "cop_position_data.csv"
+    )
+
+    np.savetxt(
+        cop_csv_path,
+        cop_csv_data,
+        delimiter=",",
+        header=",".join(
+            cop_csv_header
+        ),
+        comments="",
+    )
+
+    print(
+        f"COP plot data saved to: "
+        f"{cop_csv_path}"
+    )
+
+    # =========================================================
+    # 4. Xác định các khoảng external impulse
     # =========================================================
 
     active = impulse_active.astype(
@@ -333,7 +396,7 @@ def plot_cop_position(
     )
 
     # =========================================================
-    # 3. Figure
+    # 5. Figure
     # =========================================================
 
     fig, axes = plt.subplots(
@@ -345,7 +408,7 @@ def plot_cop_position(
     )
 
     # =========================================================
-    # 4. COP theo X
+    # 6. COP theo X
     # =========================================================
 
     axes[0].fill_between(
@@ -400,7 +463,7 @@ def plot_cop_position(
     axes[0].legend()
 
     # =========================================================
-    # 5. COP theo Y
+    # 7. COP theo Y
     # =========================================================
 
     axes[1].fill_between(
@@ -459,7 +522,7 @@ def plot_cop_position(
     axes[1].legend()
 
     # =========================================================
-    # 6. Save
+    # 8. Save
     # =========================================================
 
     fig.savefig(
