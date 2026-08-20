@@ -217,50 +217,6 @@ def recovery_position_xy_l2(
     )
 
 
-# ============================================================
-# Pre-push orientation recovery penalty
-# ============================================================
-
-def recovery_orientation_l2(
-    env,
-    asset_cfg,
-) -> torch.Tensor:
-    """
-    Phạt sai lệch orientation của root/base so với
-    orientation ngay trước push.
-
-    Orientation error dùng axis-angle vector:
-
-        e_R = AxisAngle(q_ref^-1 * q)
-
-    Cost:
-        ||e_R||^2
-
-    Chỉ active sau khi impulse đã kết thúc.
-    """
-
-    error_rotvec = pre_push_orientation_error(
-        env,
-        asset_cfg,
-    )
-
-    cost = torch.sum(
-        torch.square(error_rotvec),
-        dim=1,
-    )
-
-    recovery_active = (
-        env._pre_push_pose_valid
-        & (~env._push_active)
-    )
-
-    return torch.where(
-        recovery_active,
-        cost,
-        torch.zeros_like(cost),
-    )
-
-
 class support_contact_substep:
     """
     Kiểm tra support contact tại từng physics substep.

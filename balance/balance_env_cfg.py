@@ -29,7 +29,6 @@ from balance.rewards import (
     base_ang_vel_xy_l2,
     joint_soft_limit_penalty,
     recovery_position_xy_l2,
-    recovery_orientation_l2,
     support_contact_substep,
     support_contact_reward,
 )
@@ -37,7 +36,6 @@ from balance.curriculums import push_force_curriculum
 from balance.events import BalanceBodyImpulse
 from balance.observations import (
     pre_push_position_error_xy,
-    pre_push_orientation_error,
 )
 
 
@@ -105,13 +103,6 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "pre_push_position_error_xy": ObservationTermCfg(
             func=pre_push_position_error_xy,
-            params={
-                "asset_cfg": robot_cfg,
-            },
-        ),
-
-        "pre_push_orientation_error": ObservationTermCfg(
-            func=pre_push_orientation_error,
             params={
                 "asset_cfg": robot_cfg,
             },
@@ -301,15 +292,6 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         "recovery_position_xy": RewardTermCfg(
             func=recovery_position_xy_l2,
             weight=-1.0,
-            params={
-                "asset_cfg": robot_cfg,
-            },
-        ),
-
-        # Quay lại orientation trước khi bị push
-        "recovery_orientation": RewardTermCfg(
-            func=recovery_orientation_l2,
-            weight=-0.5,
             params={
                 "asset_cfg": robot_cfg,
             },
