@@ -207,23 +207,23 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
 
                 "stages": [
                     {
-                        "step": 500 * 24,
+                        "step": 0,
                         "weight": -0.03,
                     },
                     {
-                        "step": 600 * 24,
+                        "step": 100 * 24,
                         "weight": -0.05,
                     },
                     {
-                        "step": 700 * 24,
+                        "step": 200 * 24,
                         "weight": -0.07,
                     },
                     {
-                        "step": 800 * 24,
+                        "step": 300 * 24,
                         "weight": -0.09,
                     },
                     {
-                        "step": 900 * 24,
+                        "step": 400 * 24,
                         "weight": -0.10,
                     },
                 ],
@@ -287,7 +287,7 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "action_rate": RewardTermCfg(
             func=mdp.action_rate_l2,
-            weight=-0.02,
+            weight=-0.03,
         ),
 
         "support_contact": RewardTermCfg(
