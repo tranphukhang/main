@@ -22,6 +22,20 @@ def main():
 
     train_env_cfg = balance_env_cfg()
 
+    # ---------------------------------------------------------
+    # Resume training:
+    # policy đã hoàn thành curriculum 3 -> 15 N
+    # nên giữ disturbance ở mức cuối 15 N
+    # ---------------------------------------------------------
+
+    train_env_cfg.curriculum = {}
+
+    train_env_cfg.events[
+        "body_impulse"
+    ].params[
+        "force_range"
+    ] = (-15.0, 15.0)
+
     # Số môi trường chạy song song khi train
     train_env_cfg.scene.num_envs = 1024
 

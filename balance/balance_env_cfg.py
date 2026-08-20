@@ -197,6 +197,36 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
                 ],
             },
         ),
+
+        "action_rate_weight": CurriculumTermCfg(
+            func=mdp.reward_curriculum,
+            params={
+                "reward_name": "action_rate",
+
+                "stages": [
+                    {
+                        "step": 0,
+                        "weight": -0.03,
+                    },
+                    {
+                        "step": 100 * 24,
+                        "weight": -0.05,
+                    },
+                    {
+                        "step": 200 * 24,
+                        "weight": -0.07,
+                    },
+                    {
+                        "step": 300 * 24,
+                        "weight": -0.09,
+                    },
+                    {
+                        "step": 400 * 24,
+                        "weight": -0.10,
+                    },
+                ],
+            },
+        ),
     }
 
     # ---------------------------------------------------------
@@ -240,7 +270,7 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "action_rate": RewardTermCfg(
             func=mdp.action_rate_l2,
-            weight=-0.02,
+            weight=-0.03,
         ),
 
         "support_contact": RewardTermCfg(
