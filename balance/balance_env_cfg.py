@@ -154,7 +154,7 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
 
         "body_impulse": EventTermCfg(
-            func=mdp.BalanceBodyImpulse,
+            func=BalanceBodyImpulse,
             mode="step",
             params={
                 "force_range": (-3.0, 3.0),
