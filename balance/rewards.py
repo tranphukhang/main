@@ -11,11 +11,6 @@ import warp as wp
 
 from mjlab.envs import mdp
 
-from balance.observations import (
-    initial_position_error_xy,
-)
-
-
 if TYPE_CHECKING:
     from mjlab.envs import ManagerBasedRlEnv
 
@@ -166,39 +161,6 @@ def joint_soft_limit_penalty(
 
     return torch.sum(
         penalty,
-        dim=1,
-    )
-
-# ============================================================
-# Initial XY position penalty
-# ============================================================
-
-def initial_position_xy_l2(
-    env,
-    asset_cfg,
-) -> torch.Tensor:
-    """
-    Phạt sai lệch vị trí XY của root/base so với
-    vị trí ban đầu của robot.
-
-    Cost:
-
-        (x - x0)^2
-        +
-        (y - y0)^2
-
-    Reward active trong toàn bộ episode.
-    """
-
-    error_xy = initial_position_error_xy(
-        env,
-        asset_cfg,
-    )
-
-    return torch.sum(
-        torch.square(
-            error_xy
-        ),
         dim=1,
     )
 
