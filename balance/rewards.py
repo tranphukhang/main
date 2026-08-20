@@ -166,27 +166,39 @@ def joint_soft_limit_penalty(
     )
 
 
-class support_contact_reward:
+class support_contact_substep:
     """
-    Reward khi robot tạo được tập contact chân-ground
-    đủ để hình thành support hợp lệ.
+    Kiểm tra support contact tại từng physics substep.
 
-    Điều kiện:
-    1. Hai chân contact:
-       - mỗi chân >= 1 contact
-       - tổng contact >= 3
+    Điều kiện support hợp lệ:
 
-    2. Một chân contact:
-       - chân đó phải có >= 3 contact
+    1. Double support:
+       - chân trái >= 1 contact
+       - chân phải >= 1 contact
+       - tổng số contact >= 3
 
-    Chỉ tính contact có normal force > min_normal_force.
+    2. Single support:
+       - chỉ chân trái contact và >= 3 contact
+       hoặc
+       - chỉ chân phải contact và >= 3 contact
+
+    Chỉ tính contact foot <-> terrain
+    có normal force > min_normal_force.
+
+    Mỗi lần class được gọi:
+        - tính valid_support tại physics step hiện tại
+        - cộng kết quả vào accumulator
+
+    Sau 40 physics steps:
+        support_contact_reward()
+        sẽ lấy giá trị trung bình.
     """
 
     def __init__(self, cfg, env):
 
-        # -----------------------------------------------------
-        # ID terrain và hai bàn chân
-        # -----------------------------------------------------
+        # =====================================================
+        # 1. ID terrain và hai bàn chân
+        # =====================================================
 
         self.floor_geom_id = mujoco.mj_name2id(
             env.sim.mj_model,
@@ -206,9 +218,9 @@ class support_contact_reward:
             "robot/feet_right",
         )
 
-        # -----------------------------------------------------
-        # Mapping geom -> body
-        # -----------------------------------------------------
+        # =====================================================
+        # 2. Mapping geom -> body
+        # =====================================================
 
         self.geom_bodyid = torch.as_tensor(
             env.sim.mj_model.geom_bodyid,
@@ -216,9 +228,9 @@ class support_contact_reward:
             dtype=torch.long,
         )
 
-        # -----------------------------------------------------
-        # Buffer lấy contact force
-        # -----------------------------------------------------
+        # =====================================================
+        # 3. Buffer lấy contact force từ MuJoCo Warp
+        # =====================================================
 
         self.max_contacts = (
             env.sim.data.contact.pos.shape[0]
@@ -243,15 +255,39 @@ class support_contact_reward:
             self.contact_force_wp
         )
 
+        # =====================================================
+        # 4. Accumulator trong một control step
+        # =====================================================
+
+        self.support_sum = torch.zeros(
+            env.num_envs,
+            device=env.device,
+            dtype=torch.float32,
+        )
+
+        self.support_count = torch.zeros(
+            env.num_envs,
+            device=env.device,
+            dtype=torch.float32,
+        )
+
+        # Reward function sẽ đọc trực tiếp hai buffer này
+        env._support_contact_sum = self.support_sum
+        env._support_contact_count = self.support_count
+
+    # =========================================================
+    # Physics-substep evaluation
+    # =========================================================
+
     def __call__(
         self,
         env,
         min_normal_force: float = 1.0,
     ) -> torch.Tensor:
 
-        # -----------------------------------------------------
-        # 1. Tính contact force hiện tại
-        # -----------------------------------------------------
+        # =====================================================
+        # 1. Contact force hiện tại
+        # =====================================================
 
         mjwarp.contact_force(
             env.sim.wp_model,
@@ -261,13 +297,14 @@ class support_contact_reward:
             self.contact_force_wp,
         )
 
+        # Thành phần đầu tiên là normal force
         normal_force = (
             self.contact_force_torch[:, 0]
         )
 
-        # -----------------------------------------------------
-        # 2. Hai geom tạo mỗi contact
-        # -----------------------------------------------------
+        # =====================================================
+        # 2. Hai geom của mỗi contact
+        # =====================================================
 
         contact_geom = (
             env.sim.data.contact.geom
@@ -276,9 +313,9 @@ class support_contact_reward:
         geom1 = contact_geom[:, 0].long()
         geom2 = contact_geom[:, 1].long()
 
-        # -----------------------------------------------------
+        # =====================================================
         # 3. Chỉ lấy contact terrain <-> foot
-        # -----------------------------------------------------
+        # =====================================================
 
         floor_is_geom1 = (
             geom1 == self.floor_geom_id
@@ -288,6 +325,9 @@ class support_contact_reward:
             geom2 == self.floor_geom_id
         )
 
+        # Nếu terrain là geom1 -> foot là geom2
+        # Nếu terrain là geom2 -> foot là geom1
+        # Nếu không liên quan terrain -> -1
         foot_geom = torch.where(
             floor_is_geom1,
             geom2,
@@ -305,6 +345,7 @@ class support_contact_reward:
             foot_geom >= 0
         )
 
+        # Tránh index = -1
         safe_foot_geom = torch.clamp(
             foot_geom,
             min=0,
@@ -314,14 +355,15 @@ class support_contact_reward:
             safe_foot_geom
         ]
 
-        # -----------------------------------------------------
-        # 4. Xác định contact chân trái / phải
-        # -----------------------------------------------------
+        # =====================================================
+        # 4. Contact hợp lệ theo normal force
+        # =====================================================
 
         valid_force = (
             normal_force > min_normal_force
         )
 
+        # Contact chân trái
         left_contact = (
             valid_foot_geom
             & valid_force
@@ -331,6 +373,7 @@ class support_contact_reward:
             )
         )
 
+        # Contact chân phải
         right_contact = (
             valid_foot_geom
             & valid_force
@@ -340,9 +383,9 @@ class support_contact_reward:
             )
         )
 
-        # -----------------------------------------------------
+        # =====================================================
         # 5. Contact thuộc environment nào
-        # -----------------------------------------------------
+        # =====================================================
 
         world_id = (
             env.sim.data.contact.worldid.long()
@@ -353,18 +396,20 @@ class support_contact_reward:
             & (world_id < env.num_envs)
         )
 
-        # -----------------------------------------------------
-        # 6. Đếm contact cho từng chân, từng env
-        # -----------------------------------------------------
+        # =====================================================
+        # 6. Đếm contact từng chân cho từng environment
+        # =====================================================
 
         left_count = torch.zeros(
             env.num_envs,
             device=env.device,
+            dtype=torch.float32,
         )
 
         right_count = torch.zeros(
             env.num_envs,
             device=env.device,
+            dtype=torch.float32,
         )
 
         left_mask = (
@@ -395,28 +440,37 @@ class support_contact_reward:
             ),
         )
 
-        # -----------------------------------------------------
-        # 7. Điều kiện support
-        # -----------------------------------------------------
+        # =====================================================
+        # 7. Xác định support hợp lệ
+        # =====================================================
 
         total_count = (
             left_count + right_count
         )
 
-        # Hai chân cùng tiếp xúc
+        # -----------------------------------------------------
+        # Double support
+        # -----------------------------------------------------
+
         double_support = (
             (left_count >= 1)
             & (right_count >= 1)
             & (total_count >= 3)
         )
 
-        # Chỉ chân trái
+        # -----------------------------------------------------
+        # Left single support
+        # -----------------------------------------------------
+
         left_single_support = (
             (left_count >= 3)
             & (right_count == 0)
         )
 
-        # Chỉ chân phải
+        # -----------------------------------------------------
+        # Right single support
+        # -----------------------------------------------------
+
         right_single_support = (
             (right_count >= 3)
             & (left_count == 0)
@@ -428,4 +482,105 @@ class support_contact_reward:
             | right_single_support
         )
 
-        return valid_support.float()
+        valid_support_float = (
+            valid_support.float()
+        )
+
+        # =====================================================
+        # 8. Accumulate physics-substep result
+        # =====================================================
+
+        self.support_sum += (
+            valid_support_float
+        )
+
+        self.support_count += 1.0
+
+        # MetricsManager cũng nhận giá trị của substep này
+        return valid_support_float
+
+    # =========================================================
+    # Reset khi environment reset
+    # =========================================================
+
+    def reset(
+        self,
+        env_ids: torch.Tensor | None = None,
+    ):
+
+        if env_ids is None:
+
+            self.support_sum.zero_()
+            self.support_count.zero_()
+
+            return
+
+        self.support_sum[
+            env_ids
+        ] = 0.0
+
+        self.support_count[
+            env_ids
+        ] = 0.0
+
+
+# ============================================================
+# Support contact reward
+# ============================================================
+
+def support_contact_reward(
+    env,
+) -> torch.Tensor:
+    """
+    Reward support được tính bằng tỷ lệ physics substeps
+    có support hợp lệ trong một control step.
+
+    Với:
+        physics_dt = 0.0005 s
+        decimation = 40
+
+    Một control step có 40 physics substeps.
+
+    Reward:
+        r_support
+        = số physics steps support hợp lệ
+          / tổng physics steps
+
+    Ví dụ:
+        40 / 40 -> 1.00
+        36 / 40 -> 0.90
+        20 / 40 -> 0.50
+         0 / 40 -> 0.00
+    """
+
+    support_sum = (
+        env._support_contact_sum
+    )
+
+    support_count = (
+        env._support_contact_count
+    )
+
+    # =========================================================
+    # Mean support trong control interval vừa qua
+    # =========================================================
+
+    reward = (
+        support_sum
+        / torch.clamp(
+            support_count,
+            min=1.0,
+        )
+    )
+
+    # Clone trước khi reset accumulator
+    reward = reward.clone()
+
+    # =========================================================
+    # Reset accumulator cho control step tiếp theo
+    # =========================================================
+
+    support_sum.zero_()
+    support_count.zero_()
+
+    return reward
