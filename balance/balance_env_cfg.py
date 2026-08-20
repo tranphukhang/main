@@ -290,6 +290,7 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         rewards=rewards,
         terminations=terminations,
         events=events,
+        curriculum=curriculum,
 
         sim=SimulationCfg(
             mujoco=MujocoCfg(
