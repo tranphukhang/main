@@ -69,10 +69,10 @@ def balance_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         experiment_name="balance_v1",
         run_name="baseline_v1",
 
-        resume=True,
+        resume=False,
 
-        load_run="2026-08-20_13-21-58_baseline_v1",
-        load_checkpoint="model_499.pt",
+        # load_run="2026-08-20_13-21-58_baseline_v1",
+        # load_checkpoint="model_499.pt",
 
         num_steps_per_env=24,
 
