@@ -29,6 +29,7 @@ from balance.rewards import (
     joint_soft_limit_penalty,
     support_contact_reward,
 )
+from balance.curriculums import push_force_curriculum
 
 
 def balance_env_cfg() -> ManagerBasedRlEnvCfg:
@@ -158,6 +159,42 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
                 "duration_s": (0.1, 0.16),
                 "cooldown_s": (2.0, 4.0),
                 "asset_cfg": base_body_cfg,
+            },
+        ),
+    }
+
+    # ---------------------------------------------------------
+    # Curriculum
+    # ---------------------------------------------------------
+
+    curriculum = {
+        "push_force": CurriculumTermCfg(
+            func=push_force_curriculum,
+            params={
+                "event_name": "body_impulse",
+
+                "stages": [
+                    {
+                        "step": 0,
+                        "max_force": 3.0,
+                    },
+                    {
+                        "step": 100 * 24,
+                        "max_force": 6.0,
+                    },
+                    {
+                        "step": 200 * 24,
+                        "max_force": 9.0,
+                    },
+                    {
+                        "step": 300 * 24,
+                        "max_force": 12.0,
+                    },
+                    {
+                        "step": 400 * 24,
+                        "max_force": 15.0,
+                    },
+                ],
             },
         ),
     }
