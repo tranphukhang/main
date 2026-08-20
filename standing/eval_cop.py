@@ -17,7 +17,7 @@ from standing.joint_plotter import JointPlotter
 
 def main():
 
-    IMPULSE_DIRECTION = "x+"
+    IMPULSE_DIRECTION = "y-"
 
     direction_map = {
         "x+": (1.0, 0.0, 0.0),
