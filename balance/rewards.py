@@ -11,6 +11,11 @@ import warp as wp
 
 from mjlab.envs import mdp
 
+from balance.observations import (
+    pre_push_position_error_xy,
+    pre_push_orientation_error,
+)
+
 
 if TYPE_CHECKING:
     from mjlab.envs import ManagerBasedRlEnv
@@ -163,6 +168,96 @@ def joint_soft_limit_penalty(
     return torch.sum(
         penalty,
         dim=1,
+    )
+
+
+# ============================================================
+# Pre-push position recovery penalty
+# ============================================================
+
+def recovery_position_xy_l2(
+    env,
+    asset_cfg,
+) -> torch.Tensor:
+    """
+    Phạt sai lệch vị trí XY của root/base so với vị trí
+    ngay trước khi push xảy ra.
+
+    Chỉ active khi:
+        - pre-push reference đã tồn tại
+        - impulse đã kết thúc
+
+    Trong lúc force đang tác động:
+        penalty = 0
+
+    Cost:
+        (x - x_ref)^2 + (y - y_ref)^2
+    """
+
+    error_xy = pre_push_position_error_xy(
+        env,
+        asset_cfg,
+    )
+
+    cost = torch.sum(
+        torch.square(error_xy),
+        dim=1,
+    )
+
+    # Recovery chỉ bắt đầu sau khi push kết thúc
+    recovery_active = (
+        env._pre_push_pose_valid
+        & (~env._push_active)
+    )
+
+    return torch.where(
+        recovery_active,
+        cost,
+        torch.zeros_like(cost),
+    )
+
+
+# ============================================================
+# Pre-push orientation recovery penalty
+# ============================================================
+
+def recovery_orientation_l2(
+    env,
+    asset_cfg,
+) -> torch.Tensor:
+    """
+    Phạt sai lệch orientation của root/base so với
+    orientation ngay trước push.
+
+    Orientation error dùng axis-angle vector:
+
+        e_R = AxisAngle(q_ref^-1 * q)
+
+    Cost:
+        ||e_R||^2
+
+    Chỉ active sau khi impulse đã kết thúc.
+    """
+
+    error_rotvec = pre_push_orientation_error(
+        env,
+        asset_cfg,
+    )
+
+    cost = torch.sum(
+        torch.square(error_rotvec),
+        dim=1,
+    )
+
+    recovery_active = (
+        env._pre_push_pose_valid
+        & (~env._push_active)
+    )
+
+    return torch.where(
+        recovery_active,
+        cost,
+        torch.zeros_like(cost),
     )
 
 

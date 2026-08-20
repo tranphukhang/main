@@ -28,6 +28,8 @@ from balance.rewards import (
     base_lin_vel_xy_l2,
     base_ang_vel_xy_l2,
     joint_soft_limit_penalty,
+    recovery_position_xy_l2,
+    recovery_orientation_l2,
     support_contact_substep,
     support_contact_reward,
 )
@@ -293,6 +295,24 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         "base_ang_vel_xy": RewardTermCfg(
             func=base_ang_vel_xy_l2,
             weight=-0.2,
+        ),
+
+        # Quay lại vị trí XY trước khi bị push
+        "recovery_position_xy": RewardTermCfg(
+            func=recovery_position_xy_l2,
+            weight=-1.0,
+            params={
+                "asset_cfg": robot_cfg,
+            },
+        ),
+
+        # Quay lại orientation trước khi bị push
+        "recovery_orientation": RewardTermCfg(
+            func=recovery_orientation_l2,
+            weight=-0.5,
+            params={
+                "asset_cfg": robot_cfg,
+            },
         ),
 
         "joint_limit": RewardTermCfg(
