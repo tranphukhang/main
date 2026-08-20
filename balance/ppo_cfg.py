@@ -71,7 +71,7 @@ def balance_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
 
         resume=False,
 
-        # load_run="2026-08-20_13-21-58_baseline_v1",
+        # load_run="2026-08-20_20-04-34_baseline_v1",
         # load_checkpoint="model_499.pt",
 
         num_steps_per_env=24,
@@ -80,7 +80,7 @@ def balance_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         save_interval=50,
 
         # Tổng số learning iterations
-        max_iterations=500,
+        max_iterations=1000,
 
         # Raw policy action nằm trong [-1, 1]
         clip_actions=1.0,

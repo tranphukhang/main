@@ -207,6 +207,26 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
                         "step": 400 * 24,
                         "max_force": 15.0,
                     },
+                    {
+                        "step": 500 * 24,
+                        "max_force": 18.0,
+                    },
+                    {
+                        "step": 600 * 24,
+                        "max_force": 21.0,
+                    },
+                    {
+                        "step": 700 * 24,
+                        "max_force": 24.0,
+                    },
+                    {
+                        "step": 800 * 24,
+                        "max_force": 27.0,
+                    },
+                    {
+                        "step": 900 * 24,
+                        "max_force": 33.0,
+                    },
                 ],
             },
         ),
