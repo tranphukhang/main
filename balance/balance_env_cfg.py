@@ -9,6 +9,7 @@ from mjlab.managers.observation_manager import (
     ObservationGroupCfg,
     ObservationTermCfg,
 )
+from mjlab.managers.reward_manager import RewardTermCfg
 from mjlab.managers.scene_entity_config import SceneEntityCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
 
@@ -19,6 +20,11 @@ from mjlab.utils.spec_config import GeomCfg
 from mjlab.viewer import ViewerConfig
 
 from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
+
+from balance.rewards import (
+    base_lin_vel_xy_l2,
+    base_ang_vel_xy_l2,
+)
 
 
 def balance_env_cfg() -> ManagerBasedRlEnvCfg:
@@ -123,10 +129,34 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
 
     # ---------------------------------------------------------
     # Rewards
-    # Thiết kế riêng sau
     # ---------------------------------------------------------
 
-    rewards = {}
+    rewards: dict[str, RewardTermCfg] = {
+
+        # Robot còn sống, chưa vi phạm termination
+        "alive": RewardTermCfg(
+            func=mdp.is_alive,
+            weight=1.0,
+        ),
+
+        # Giữ thân robot gần thẳng đứng
+        "orientation": RewardTermCfg(
+            func=mdp.flat_orientation_l2,
+            weight=-2.0,
+        ),
+
+        # Giảm vận tốc tuyến tính của base trên mặt phẳng XY
+        "base_lin_vel_xy": RewardTermCfg(
+            func=base_lin_vel_xy_l2,
+            weight=-1.0,
+        ),
+
+        # Giảm vận tốc góc roll/pitch của base
+        "base_ang_vel_xy": RewardTermCfg(
+            func=base_ang_vel_xy_l2,
+            weight=-0.2,
+        ),
+    }
 
     # ---------------------------------------------------------
     # Terrain
