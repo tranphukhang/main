@@ -80,7 +80,7 @@ def balance_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         save_interval=50,
 
         # Tổng số learning iterations
-        max_iterations=1000,
+        max_iterations=600,
 
         # Raw policy action nằm trong [-1, 1]
         clip_actions=1.0,
