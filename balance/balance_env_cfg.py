@@ -33,6 +33,10 @@ from balance.rewards import (
 )
 from balance.curriculums import push_force_curriculum
 from balance.events import BalanceBodyImpulse
+from balance.observations import (
+    pre_push_position_error_xy,
+    pre_push_orientation_error,
+)
 
 
 def balance_env_cfg() -> ManagerBasedRlEnvCfg:
@@ -95,6 +99,20 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "actions": ObservationTermCfg(
             func=mdp.last_action,
+        ),
+
+        "pre_push_position_error_xy": ObservationTermCfg(
+            func=pre_push_position_error_xy,
+            params={
+                "asset_cfg": robot_cfg,
+            },
+        ),
+
+        "pre_push_orientation_error": ObservationTermCfg(
+            func=pre_push_orientation_error,
+            params={
+                "asset_cfg": robot_cfg,
+            },
         ),
     }
 
