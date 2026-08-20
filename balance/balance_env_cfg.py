@@ -28,14 +28,13 @@ from balance.rewards import (
     base_lin_vel_xy_l2,
     base_ang_vel_xy_l2,
     joint_soft_limit_penalty,
-    recovery_position_xy_l2,
+    initial_position_xy_l2,
     support_contact_substep,
     support_contact_reward,
 )
 from balance.curriculums import push_force_curriculum
-from balance.events import BalanceBodyImpulse
 from balance.observations import (
-    pre_push_position_error_xy,
+    initial_position_error_xy,
 )
 
 
@@ -101,8 +100,8 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
             func=mdp.last_action,
         ),
 
-        "pre_push_position_error_xy": ObservationTermCfg(
-            func=pre_push_position_error_xy,
+        "initial_position_error_xy": ObservationTermCfg(
+            func=initial_position_error_xy,
             params={
                 "asset_cfg": robot_cfg,
             },
@@ -165,13 +164,13 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
 
         "body_impulse": EventTermCfg(
-            func=BalanceBodyImpulse,
+            func=mdp.apply_body_impulse,
             mode="step",
             params={
                 "force_range": (-3.0, 3.0),
                 "torque_range": (0.0, 0.0),
                 "duration_s": (0.1, 0.2),
-                "cooldown_s": (4.0, 4.0),
+                "cooldown_s": (2.0, 4.0),
                 "asset_cfg": base_body_cfg,
             },
         ),
@@ -288,9 +287,9 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=-0.2,
         ),
 
-        # Quay lại vị trí XY trước khi bị push
-        "recovery_position_xy": RewardTermCfg(
-            func=recovery_position_xy_l2,
+        # Giữ root/base tại vị trí XY ban đầu
+        "initial_position_xy": RewardTermCfg(
+            func=initial_position_xy_l2,
             weight=-1.0,
             params={
                 "asset_cfg": robot_cfg,
@@ -374,7 +373,7 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
 
         decimation=40,
 
-        episode_length_s=8.0,
+        episode_length_s=10.0,
 
         viewer=ViewerConfig(
             origin_type=ViewerConfig.OriginType.ASSET_ROOT,

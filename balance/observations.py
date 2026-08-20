@@ -4,58 +4,81 @@ import torch
 
 
 # ============================================================
-# Pre-push position error XY
+# Initial position error XY
 # ============================================================
 
-def pre_push_position_error_xy(
+def initial_position_error_xy(
     env,
     asset_cfg,
 ) -> torch.Tensor:
     """
-    Sai lệch vị trí XY của root/base so với vị trí ngay trước push.
+    Sai lệch vị trí XY của root/base so với vị trí ban đầu
+    của robot trong environment.
 
-    Output:
-        [x - x_ref,
-         y - y_ref]
+    Error:
 
-    Trước khi push xảy ra:
-        output = [0, 0]
+        [x - x0,
+         y - y0]
 
-    Không xét z để robot vẫn được phép crouch / thay đổi độ cao
-    khi thực hiện chiến lược giữ thăng bằng.
+    Target position:
+
+        default_root_position + env_origin
+
+    Observation này active trong toàn bộ episode:
+        - trước push
+        - trong push
+        - sau push
     """
 
     robot = env.scene[
         asset_cfg.name
     ]
 
-    # Vị trí root hiện tại trong world frame
-    current_pos = (
-        robot.data.root_link_pos_w
+    # --------------------------------------------------------
+    # Vị trí XY hiện tại trong world frame
+    # --------------------------------------------------------
+
+    current_xy = (
+        robot.data.root_link_pos_w[
+            :,
+            :2,
+        ]
     )
 
-    # Reference được lưu ngay trước push
-    ref_pos = (
-        env._pre_push_pos_w
+    # --------------------------------------------------------
+    # Default root state của robot
+    # --------------------------------------------------------
+
+    default_root_state = (
+        robot.data.default_root_state
     )
 
-    # Chỉ lấy XY
+    assert default_root_state is not None
+
+    # --------------------------------------------------------
+    # Target XY của từng environment trong world frame
+    #
+    # target = default position + env origin
+    # --------------------------------------------------------
+
+    target_xy = (
+        default_root_state[
+            :,
+            :2,
+        ]
+        + env.scene.env_origins[
+            :,
+            :2,
+        ]
+    )
+
+    # --------------------------------------------------------
+    # Position error
+    # --------------------------------------------------------
+
     error_xy = (
-        current_pos[:, :2]
-        - ref_pos[:, :2]
-    )
-
-    # Trước khi có push thì chưa có reference
-    valid = (
-        env._pre_push_pose_valid
-    )
-
-    error_xy = torch.where(
-        valid.unsqueeze(-1),
-        error_xy,
-        torch.zeros_like(
-            error_xy
-        ),
+        current_xy
+        - target_xy
     )
 
     return error_xy

@@ -12,7 +12,7 @@ import warp as wp
 from mjlab.envs import mdp
 
 from balance.observations import (
-    pre_push_position_error_xy,
+    initial_position_error_xy,
 )
 
 
@@ -169,50 +169,37 @@ def joint_soft_limit_penalty(
         dim=1,
     )
 
-
 # ============================================================
-# Pre-push position recovery penalty
+# Initial XY position penalty
 # ============================================================
 
-def recovery_position_xy_l2(
+def initial_position_xy_l2(
     env,
     asset_cfg,
 ) -> torch.Tensor:
     """
-    Phạt sai lệch vị trí XY của root/base so với vị trí
-    ngay trước khi push xảy ra.
-
-    Chỉ active khi:
-        - pre-push reference đã tồn tại
-        - impulse đã kết thúc
-
-    Trong lúc force đang tác động:
-        penalty = 0
+    Phạt sai lệch vị trí XY của root/base so với
+    vị trí ban đầu của robot.
 
     Cost:
-        (x - x_ref)^2 + (y - y_ref)^2
+
+        (x - x0)^2
+        +
+        (y - y0)^2
+
+    Reward active trong toàn bộ episode.
     """
 
-    error_xy = pre_push_position_error_xy(
+    error_xy = initial_position_error_xy(
         env,
         asset_cfg,
     )
 
-    cost = torch.sum(
-        torch.square(error_xy),
+    return torch.sum(
+        torch.square(
+            error_xy
+        ),
         dim=1,
-    )
-
-    # Recovery chỉ bắt đầu sau khi push kết thúc
-    recovery_active = (
-        env._pre_push_pose_valid
-        & (~env._push_active)
-    )
-
-    return torch.where(
-        recovery_active,
-        cost,
-        torch.zeros_like(cost),
     )
 
 
