@@ -25,6 +25,7 @@ from balance.rewards import (
     base_lin_vel_xy_l2,
     base_ang_vel_xy_l2,
     joint_soft_limit_penalty,
+    support_contact_reward,
 )
 
 
@@ -180,6 +181,14 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         "action_rate": RewardTermCfg(
             func=mdp.action_rate_l2,
             weight=-0.02,
+        ),
+
+        "support_contact": RewardTermCfg(
+            func=support_contact_reward,
+            weight=0.5,
+            params={
+                "min_normal_force": 1.0,
+            },
         ),
     }
 
