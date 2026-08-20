@@ -24,6 +24,7 @@ from robot_cfg import ROBOT_CFG, ACTUATED_JOINTS
 from balance.rewards import (
     base_lin_vel_xy_l2,
     base_ang_vel_xy_l2,
+    joint_soft_limit_penalty,
 )
 
 
@@ -36,6 +37,16 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
     robot_cfg = SceneEntityCfg(
         "robot",
         joint_names=ACTUATED_JOINTS,
+        preserve_order=True,
+    )
+
+    limited_joint_cfg = SceneEntityCfg(
+        "robot",
+        joint_names=(
+            *ACTUATED_JOINTS,
+            "ankle_pitch_passive_4_left",
+            "ankle_pitch_passive_4_right",
+        ),
         preserve_order=True,
     )
 
@@ -155,6 +166,15 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         "base_ang_vel_xy": RewardTermCfg(
             func=base_ang_vel_xy_l2,
             weight=-0.2,
+        ),
+
+        "joint_limit": RewardTermCfg(
+            func=joint_soft_limit_penalty,
+            weight=-0.1,
+            params={
+                "asset_cfg": limited_joint_cfg,
+                "soft_ratio": 0.8,
+            },
         ),
     }
 

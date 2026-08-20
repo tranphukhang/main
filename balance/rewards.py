@@ -69,3 +69,93 @@ def base_ang_vel_xy_l2(
         ),
         dim=1,
     )
+
+
+def joint_soft_limit_penalty(
+    env: ManagerBasedRlEnv,
+    asset_cfg,
+    soft_ratio: float = 0.8,
+) -> torch.Tensor:
+    """
+    Phạt khi vị trí khớp đi vào vùng gần giới hạn cơ khí.
+
+    soft_ratio = 0.8:
+        - Không phạt trong 80% khoảng chuyển động.
+        - Bắt đầu phạt từ 80% đến hard limit.
+        - Penalty = 1 tại hard limit của mỗi khớp.
+    """
+
+    robot = env.scene[asset_cfg.name]
+
+    q = robot.data.joint_pos[
+        :,
+        asset_cfg.joint_ids,
+    ]
+
+    hard_limits = robot.data.joint_pos_limits[
+        :,
+        asset_cfg.joint_ids,
+        :,
+    ]
+
+    hard_lower = hard_limits[:, :, 0]
+    hard_upper = hard_limits[:, :, 1]
+
+    # Tâm của khoảng giới hạn
+    center = 0.5 * (
+        hard_lower + hard_upper
+    )
+
+    # Một nửa khoảng chuyển động
+    half_range = 0.5 * (
+        hard_upper - hard_lower
+    )
+
+    # Soft limits = 80% hard range
+    soft_half_range = (
+        soft_ratio * half_range
+    )
+
+    soft_lower = center - soft_half_range
+    soft_upper = center + soft_half_range
+
+    # Khoảng từ soft limit tới hard limit
+    margin = (
+        half_range - soft_half_range
+    )
+
+    # Mức vượt soft limit
+    lower_excess = torch.clamp(
+        soft_lower - q,
+        min=0.0,
+    )
+
+    upper_excess = torch.clamp(
+        q - soft_upper,
+        min=0.0,
+    )
+
+    excess = (
+        lower_excess
+        + upper_excess
+    )
+
+    # Chuẩn hóa:
+    # 0 tại soft limit
+    # 1 tại hard limit
+    normalized_excess = (
+        excess
+        / torch.clamp(
+            margin,
+            min=1e-6,
+        )
+    )
+
+    penalty = (
+        normalized_excess ** 2
+    )
+
+    return torch.sum(
+        penalty,
+        dim=1,
+    )
