@@ -158,8 +158,8 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
             params={
                 "force_range": (-3.0, 3.0),
                 "torque_range": (0.0, 0.0),
-                "duration_s": (0.1, 0.16),
-                "cooldown_s": (2.0, 4.0),
+                "duration_s": (0.1, 0.2),
+                "cooldown_s": (4.0, 4.0),
                 "asset_cfg": base_body_cfg,
             },
         ),
@@ -353,7 +353,7 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
 
         decimation=40,
 
-        episode_length_s=10.0,
+        episode_length_s=8.0,
 
         viewer=ViewerConfig(
             origin_type=ViewerConfig.OriginType.ASSET_ROOT,
