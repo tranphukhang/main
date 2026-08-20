@@ -12,6 +12,8 @@ from mjlab.managers.observation_manager import (
 from mjlab.managers.reward_manager import RewardTermCfg
 from mjlab.managers.scene_entity_config import SceneEntityCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
+from mjlab.managers.event_manager import EventTermCfg
+from mjlab.managers.curriculum_manager import CurriculumTermCfg
 
 from mjlab.scene import SceneCfg
 from mjlab.sim import MujocoCfg, SimulationCfg
@@ -39,6 +41,11 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         "robot",
         joint_names=ACTUATED_JOINTS,
         preserve_order=True,
+    )
+
+    base_body_cfg = SceneEntityCfg(
+        "robot",
+        body_names=("base",),
     )
 
     limited_joint_cfg = SceneEntityCfg(
@@ -134,10 +141,26 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
 
     # ---------------------------------------------------------
     # Events
-    # Thiết kế riêng sau
     # ---------------------------------------------------------
 
-    events = {}
+    events = {
+        "reset_scene_to_default": EventTermCfg(
+            func=mdp.reset_scene_to_default,
+            mode="reset",
+        ),
+
+        "body_impulse": EventTermCfg(
+            func=mdp.apply_body_impulse,
+            mode="step",
+            params={
+                "force_range": (-3.0, 3.0),
+                "torque_range": (0.0, 0.0),
+                "duration_s": (0.1, 0.16),
+                "cooldown_s": (2.0, 4.0),
+                "asset_cfg": base_body_cfg,
+            },
+        ),
+    }
 
     # ---------------------------------------------------------
     # Rewards
