@@ -2,12 +2,6 @@ from __future__ import annotations
 
 import torch
 
-from mjlab.utils.lab_api.math import (
-    quat_conjugate,
-    quat_mul,
-    axis_angle_from_quat,
-)
-
 
 # ============================================================
 # Pre-push position error XY

@@ -13,7 +13,6 @@ from mjlab.envs import mdp
 
 from balance.observations import (
     pre_push_position_error_xy,
-    pre_push_orientation_error,
 )
 
 
