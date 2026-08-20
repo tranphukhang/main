@@ -32,6 +32,7 @@ from balance.rewards import (
     support_contact_reward,
 )
 from balance.curriculums import push_force_curriculum
+from balance.events import BalanceBodyImpulse
 
 
 def balance_env_cfg() -> ManagerBasedRlEnvCfg:
@@ -153,7 +154,7 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         ),
 
         "body_impulse": EventTermCfg(
-            func=mdp.apply_body_impulse,
+            func=mdp.BalanceBodyImpulse,
             mode="step",
             params={
                 "force_range": (-3.0, 3.0),
