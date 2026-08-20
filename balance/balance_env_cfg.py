@@ -28,14 +28,10 @@ from balance.rewards import (
     base_lin_vel_xy_l2,
     base_ang_vel_xy_l2,
     joint_soft_limit_penalty,
-    initial_position_xy_l2,
     support_contact_substep,
     support_contact_reward,
 )
 from balance.curriculums import push_force_curriculum
-from balance.observations import (
-    initial_position_error_xy,
-)
 
 
 def balance_env_cfg() -> ManagerBasedRlEnvCfg:
@@ -98,13 +94,6 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "actions": ObservationTermCfg(
             func=mdp.last_action,
-        ),
-
-        "initial_position_error_xy": ObservationTermCfg(
-            func=initial_position_error_xy,
-            params={
-                "asset_cfg": robot_cfg,
-            },
         ),
     }
 
@@ -207,26 +196,6 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
                         "step": 400 * 24,
                         "max_force": 15.0,
                     },
-                    {
-                        "step": 500 * 24,
-                        "max_force": 18.0,
-                    },
-                    {
-                        "step": 600 * 24,
-                        "max_force": 21.0,
-                    },
-                    {
-                        "step": 700 * 24,
-                        "max_force": 24.0,
-                    },
-                    {
-                        "step": 800 * 24,
-                        "max_force": 27.0,
-                    },
-                    {
-                        "step": 900 * 24,
-                        "max_force": 33.0,
-                    },
                 ],
             },
         ),
@@ -305,15 +274,6 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         "base_ang_vel_xy": RewardTermCfg(
             func=base_ang_vel_xy_l2,
             weight=-0.2,
-        ),
-
-        # Giữ root/base tại vị trí XY ban đầu
-        "initial_position_xy": RewardTermCfg(
-            func=initial_position_xy_l2,
-            weight=-1.0,
-            params={
-                "asset_cfg": robot_cfg,
-            },
         ),
 
         "joint_limit": RewardTermCfg(
