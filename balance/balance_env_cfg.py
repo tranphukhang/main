@@ -14,6 +14,7 @@ from mjlab.managers.scene_entity_config import SceneEntityCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
 from mjlab.managers.event_manager import EventTermCfg
 from mjlab.managers.curriculum_manager import CurriculumTermCfg
+from mjlab.managers.metrics_manager import MetricsTermCfg
 
 from mjlab.scene import SceneCfg
 from mjlab.sim import MujocoCfg, SimulationCfg
@@ -27,6 +28,7 @@ from balance.rewards import (
     base_lin_vel_xy_l2,
     base_ang_vel_xy_l2,
     joint_soft_limit_penalty,
+    support_contact_substep,
     support_contact_reward,
 )
 from balance.curriculums import push_force_curriculum
@@ -230,6 +232,21 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
     }
 
     # ---------------------------------------------------------
+    # Metrics
+    # ---------------------------------------------------------
+
+    metrics = {
+        "support_contact_substep": MetricsTermCfg(
+            func=support_contact_substep,
+            params={
+                "min_normal_force": 1.0,
+            },
+            per_substep=True,
+            reduce="mean",
+        ),
+    }
+
+    # ---------------------------------------------------------
     # Rewards
     # ---------------------------------------------------------
 
@@ -276,9 +293,6 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         "support_contact": RewardTermCfg(
             func=support_contact_reward,
             weight=0.5,
-            params={
-                "min_normal_force": 1.0,
-            },
         ),
     }
 
@@ -321,6 +335,7 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
         terminations=terminations,
         events=events,
         curriculum=curriculum,
+        metrics=metrics,
 
         sim=SimulationCfg(
             mujoco=MujocoCfg(
