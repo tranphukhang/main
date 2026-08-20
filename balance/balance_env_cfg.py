@@ -176,6 +176,11 @@ def balance_env_cfg() -> ManagerBasedRlEnvCfg:
                 "soft_ratio": 0.8,
             },
         ),
+
+        "action_rate": RewardTermCfg(
+            func=mdp.action_rate_l2,
+            weight=-0.02,
+        ),
     }
 
     # ---------------------------------------------------------
