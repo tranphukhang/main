@@ -1,4 +1,3 @@
-
 # TensorBoard generated files
 logs/rsl_rl/**/events.out.tfevents.*
 logs/rsl_rl/**/videos/
@@ -6,3 +5,6 @@ logs/rsl_rl/**/videos/
 # Python cache
 __pycache__/
 *.pyc
+
+# Evaluation videos
+balance/eval/videos/
