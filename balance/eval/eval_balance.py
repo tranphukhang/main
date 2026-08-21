@@ -95,8 +95,6 @@ def main():
     # Hiển thị contact point và contact force trong video
     # --------------------------------------------------------
 
-    renderer_option = env._offline_renderer._opt
-
     renderer_option.flags[
         mujoco.mjtVisFlag.mjVIS_CONTACTPOINT
     ] = 1
