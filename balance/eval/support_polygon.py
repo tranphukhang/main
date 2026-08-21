@@ -198,6 +198,7 @@ def create_support_polygon_animation(
     polygons,
     time_history,
     cop_history,
+    com_history,
     output_path,
     fps=50,
 ):
@@ -280,6 +281,16 @@ def create_support_polygon_animation(
         label="COP",
     )
 
+    # Hình chiếu COM toàn robot
+    com_plot, = ax.plot(
+        [],
+        [],
+        "*",
+        color="red",
+        markersize=12,
+        label="Projected COM",
+    )
+
     ax.legend()
 
     # =========================================================
@@ -331,6 +342,19 @@ def create_support_polygon_animation(
                 [],
             )
 
+        com = com_history[frame]
+
+        if np.all(np.isfinite(com)):
+            com_plot.set_data(
+                [com[0]],
+                [com[1]],
+            )
+        else:
+            com_plot.set_data(
+                [],
+                [],
+            )
+
         ax.set_title(
             f"Support Polygon - "
             f"t = {time_history[frame]:.2f} s"
@@ -340,6 +364,7 @@ def create_support_polygon_animation(
             polygon_patch,
             vertices_plot,
             cop_plot,
+            com_plot,
         )
 
     # =========================================================

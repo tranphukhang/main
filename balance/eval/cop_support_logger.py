@@ -101,6 +101,25 @@ class CopSupportLogger:
         )
 
         # =====================================================
+        # COM toàn robot
+        # =====================================================
+
+        self.robot = env.scene["robot"]
+
+        self.root_body_id = (
+            self.robot.indexing.root_body_id
+        )
+
+        self.com_xy_buffer = torch.empty(
+            (
+                self.max_samples,
+                2,
+            ),
+            device=device,
+            dtype=contact_dtype,
+        )
+
+        # =====================================================
         # Warp contact-force buffer
         # =====================================================
 
@@ -157,6 +176,15 @@ class CopSupportLogger:
         self.nacon_buffer[i].copy_(
             self.env.sim.data.nacon[
                 self.env_idx
+            ]
+        )
+
+        # Hình chiếu COM toàn robot lên mặt phẳng XY
+        self.com_xy_buffer[i].copy_(
+            self.env.sim.data.subtree_com[
+                self.env_idx,
+                self.root_body_id,
+                :2,
             ]
         )
 
@@ -232,6 +260,13 @@ class CopSupportLogger:
 
         nacon = (
             self.nacon_buffer[:n]
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+        com_xy = (
+            self.com_xy_buffer[:n]
             .detach()
             .cpu()
             .numpy()
@@ -313,6 +348,10 @@ class CopSupportLogger:
             cop_history[::video_stride]
         )
 
+        video_com = (
+            com_xy[::video_stride]
+        )
+
         video_time = (
             time_history[::video_stride]
         )
@@ -330,6 +369,7 @@ class CopSupportLogger:
             polygons=video_polygons,
             time_history=video_time,
             cop_history=video_cop,
+            com_history=video_com,
             output_path=output_path,
             fps=video_fps,
         )
