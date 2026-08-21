@@ -85,7 +85,7 @@
 
         <!-- Left Leg -->
             <!-- Pelvis Left -->
-            <body name="pelvis_left" pos="0.055 0.0715 -0.07" childclass="visual">
+            <body name="pelvis_left" pos="0.0315 0.0465 -0.07" childclass="visual">
                 <inertial pos="0.012326 0.0 0.010400" mass="0.385536"
                     fullinertia="0.000360 0.000475 0.000284 0.0 0.000154 0.0"/>
                 <geom type="mesh" mesh="pelvis_left"/>
@@ -103,10 +103,10 @@
                         <inertial pos="-0.037011 0.022153 -0.037058" mass="1.142395"
                             fullinertia="0.003431 0.003003 0.003446 -0.000943 -0.001109 -0.000943"/>
                         <geom type="mesh" mesh="thigh_2_left"/>
-                        <geom type="capsule" fromto="0.0 -0.028 0.0 0.0 0.054 0.0" size="0.03925" class="collision-left"/>
+                        <geom type="capsule" fromto="0.0 -0.016 0.0 0.0 0.066 0.0" size="0.03925" class="collision-left"/>
                         <geom type="capsule" fromto="0.0 0.1 0.0 0.0 0.054 0.0" size="0.0285" class="collision-left"/>
                         <geom type="capsule" fromto="0.0 0.027 0.0 -0.05904 0.027 -0.05904" size="0.03925" class="collision-left"/>
-                        <geom type="capsule" fromto="-0.05904 -0.028 -0.05904 -0.05904 0.0 -0.05904" size="0.03925" class="collision-left"/>
+                        <geom type="capsule" fromto="-0.05904 -0.014 -0.05904 -0.05904 0.014 -0.05904" size="0.03925" class="collision-left"/>
                         <geom type="capsule" fromto="-0.0868 0.027 -0.0868 -0.1017 0.027 -0.1017" size="0.027" class="collision-left"/>
                         <joint name="hip_pitch_left" type="hinge" axis="0 1 0" range="-45 45" damping="0.01" actuatorfrcrange="-17 17"/>
 
@@ -175,7 +175,7 @@
         
         <!-- Right Leg -->
             <!-- Pelvis Right -->
-            <body name="pelvis_right" pos="0.055 -0.0715 -0.07" childclass="visual">
+            <body name="pelvis_right" pos="0.0315 -0.0465 -0.07" childclass="visual">
                     <inertial pos="0.012326 0.0 0.010400" mass="0.385536"
                         fullinertia="0.000360 0.000475 0.000284 0.0 0.000154 0.0"/>
                     <geom type="mesh" mesh="pelvis_right"/>
@@ -193,10 +193,10 @@
                         <inertial pos="-0.037011 -0.022153 -0.037058" mass="1.142395"
                             fullinertia="0.003431 0.003003 0.003446 0.000943 -0.001109 0.000943"/>
                         <geom type="mesh" mesh="thigh_2_right"/>
-                        <geom type="capsule" fromto="0.0 0.028 0.0 0.0 -0.054 0.0" size="0.03925" class="collision-right"/>
+                        <geom type="capsule" fromto="0.0 0.016 0.0 0.0 -0.066 0.0" size="0.03925" class="collision-right"/>
                         <geom type="capsule" fromto="0.0 -0.1 0.0 0.0 -0.054 0.0" size="0.0285" class="collision-right"/>
                         <geom type="capsule" fromto="0.0 -0.027 0.0 -0.05904 -0.027 -0.05904" size="0.03925" class="collision-right"/>
-                        <geom type="capsule" fromto="-0.05904 0.028 -0.05904 -0.05904 0.0 -0.05904" size="0.03925" class="collision-right"/>
+                        <geom type="capsule" fromto="-0.05904 0.014 -0.05904 -0.05904 -0.014 -0.05904" size="0.03925" class="collision-right"/>
                         <geom type="capsule" fromto="-0.0868 -0.027 -0.0868 -0.1017 -0.027 -0.1017" size="0.027" class="collision-right"/>
                         <joint name="hip_pitch_right" type="hinge" axis="0 1 0" range="-45 45" damping="0.01" actuatorfrcrange="-17 17"/>
 
