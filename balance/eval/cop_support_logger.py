@@ -386,8 +386,26 @@ class CopSupportLogger:
         ground_height = 0.0
 
         # LIPM giả thiết chiều cao COM không đổi
+        # Lấy chiều cao COM trung bình trong 1 giây đầu
+        initial_duration = 1.0
+
+        initial_samples = min(
+            int(
+                round(
+                    initial_duration
+                    / self.env.step_dt
+                )
+            ),
+            len(video_com_pos),
+        )
+
         com_height = float(
-            video_com_pos[0, 2]
+            np.mean(
+                video_com_pos[
+                    :initial_samples,
+                    2,
+                ]
+            )
             - ground_height
         )
 
@@ -412,7 +430,9 @@ class CopSupportLogger:
         )
 
         print(
-            f"LIPM COM height: "
+            f"LIPM reference COM height "
+            f"(mean of first "
+            f"{initial_duration:.1f} s): "
             f"{com_height:.4f} m"
         )
 
