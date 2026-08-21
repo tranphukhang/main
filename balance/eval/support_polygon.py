@@ -218,15 +218,47 @@ def create_support_polygon_animation(
         print("Không có support polygon hợp lệ.")
         return None, None
 
-    finite_com = np.asarray(com_history)[
-    np.all(np.isfinite(com_history), axis=1)
+    finite_com = np.asarray(
+        com_history
+    )
+
+    finite_com = finite_com[
+        np.all(
+            np.isfinite(finite_com),
+            axis=1,
+        )
     ]
 
-    limit_points = valid_points.copy()
-    if len(finite_com) > 0:
-        limit_points.append(finite_com)
+    finite_capture_point = np.asarray(
+        capture_point_history
+    )
 
-    all_points = np.vstack(limit_points)
+    finite_capture_point = (
+        finite_capture_point[
+            np.all(
+                np.isfinite(
+                    finite_capture_point
+                ),
+                axis=1,
+            )
+        ]
+    )
+
+    limit_points = valid_points.copy()
+
+    if len(finite_com) > 0:
+        limit_points.append(
+            finite_com
+        )
+
+    if len(finite_capture_point) > 0:
+        limit_points.append(
+            finite_capture_point
+        )
+
+    all_points = np.vstack(
+        limit_points
+    )
 
     x_min = np.min(all_points[:, 0])
     x_max = np.max(all_points[:, 0])
