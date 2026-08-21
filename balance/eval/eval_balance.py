@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 import torch
+import mujoco
 
 from mjlab.envs import ManagerBasedRlEnv
 from mjlab.rl import MjlabOnPolicyRunner, RslRlVecEnvWrapper
@@ -23,7 +24,7 @@ CHECKPOINT = Path(
 )
 
 EPISODE_LENGTH_S = 10.0
-TEST_FORCE_N = 25.0
+TEST_FORCE_N = 15.0
 
 
 def main():
@@ -44,7 +45,8 @@ def main():
     # --------------------------------------------------------
 
     env_cfg = balance_env_cfg()
-
+    env_cfg.viewer.width = 1280
+    env_cfg.viewer.height = 720
     env_cfg.scene.num_envs = 1
     env_cfg.episode_length_s = EPISODE_LENGTH_S
 
@@ -73,6 +75,20 @@ def main():
         render_mode="rgb_array",
     )
 
+    # --------------------------------------------------------
+    # Hiển thị contact point và contact force trong video
+    # --------------------------------------------------------
+
+    renderer_option = env._offline_renderer._opt
+
+    renderer_option.flags[
+        mujoco.mjtVisFlag.mjVIS_CONTACTPOINT
+    ] = 1
+
+    renderer_option.flags[
+        mujoco.mjtVisFlag.mjVIS_CONTACTFORCE
+    ] = 1
+
     num_steps = int(
         env_cfg.episode_length_s / env.step_dt
     )
@@ -86,7 +102,7 @@ def main():
     )
 
     video_dir = (
-        Path("balance/eval/videos")
+        Path("balance/eval/logs")
         / timestamp
     )
 
