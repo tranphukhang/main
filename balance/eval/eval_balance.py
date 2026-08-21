@@ -11,6 +11,9 @@ from mjlab.utils.wrappers import VideoRecorder
 
 from balance.balance_env_cfg import balance_env_cfg
 from balance.ppo_cfg import balance_ppo_runner_cfg
+from balance.eval.cop_support_logger import (
+    CopSupportLogger,
+)
 
 
 # ============================================================
@@ -143,6 +146,15 @@ def main():
 
     print(f"Video folder:\n{video_dir}")
 
+    cop_logger = CopSupportLogger(
+        env=env,
+        output_dir=video_dir,
+        env_idx=0,
+        min_normal_force=1.0,
+    )
+
+    cop_logger.install_physics_hook()
+
     # --------------------------------------------------------
     # 5. Gắn bộ ghi video
     # --------------------------------------------------------
@@ -205,6 +217,8 @@ def main():
                     )
 
     finally:
+        cop_logger.remove_physics_hook()
+        cop_logger.finalize()
         env.close()
 
     print("Evaluation finished.")
