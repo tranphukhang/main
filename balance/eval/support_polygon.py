@@ -199,6 +199,7 @@ def create_support_polygon_animation(
     time_history,
     cop_history,
     com_history,
+    capture_point_history,
     output_path,
     fps=50,
 ):
@@ -217,7 +218,15 @@ def create_support_polygon_animation(
         print("Không có support polygon hợp lệ.")
         return None, None
 
-    all_points = np.vstack(valid_points)
+    finite_com = np.asarray(com_history)[
+    np.all(np.isfinite(com_history), axis=1)
+    ]
+
+    limit_points = valid_points.copy()
+    if len(finite_com) > 0:
+        limit_points.append(finite_com)
+
+    all_points = np.vstack(limit_points)
 
     x_min = np.min(all_points[:, 0])
     x_max = np.max(all_points[:, 0])
@@ -291,6 +300,16 @@ def create_support_polygon_animation(
         label="Projected COM",
     )
 
+    # Capture Point theo LIPM
+    capture_point_plot, = ax.plot(
+        [],
+        [],
+        "D",
+        color="purple",
+        markersize=8,
+        label="Capture Point",
+    )
+
     ax.legend()
 
     # =========================================================
@@ -355,6 +374,23 @@ def create_support_polygon_animation(
                 [],
             )
 
+        capture_point = (
+            capture_point_history[frame]
+        )
+
+        if np.all(
+            np.isfinite(capture_point)
+        ):
+            capture_point_plot.set_data(
+                [capture_point[0]],
+                [capture_point[1]],
+            )
+        else:
+            capture_point_plot.set_data(
+                [],
+                [],
+            )
+
         ax.set_title(
             f"Support Polygon - "
             f"t = {time_history[frame]:.2f} s"
@@ -365,6 +401,7 @@ def create_support_polygon_animation(
             vertices_plot,
             cop_plot,
             com_plot,
+            capture_point_plot,
         )
 
     # =========================================================

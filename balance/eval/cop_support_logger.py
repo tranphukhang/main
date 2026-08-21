@@ -110,10 +110,10 @@ class CopSupportLogger:
             self.robot.indexing.root_body_id
         )
 
-        self.com_xy_buffer = torch.empty(
+        self.com_pos_buffer = torch.empty(
             (
                 self.max_samples,
-                2,
+                3,
             ),
             device=device,
             dtype=contact_dtype,
@@ -180,11 +180,11 @@ class CopSupportLogger:
         )
 
         # Hình chiếu COM toàn robot lên mặt phẳng XY
-        self.com_xy_buffer[i].copy_(
+        self.com_pos_buffer[i].copy_(
             self.env.sim.data.subtree_com[
                 self.env_idx,
                 self.root_body_id,
-                :2,
+                :3,
             ]
         )
 
@@ -265,8 +265,8 @@ class CopSupportLogger:
             .numpy()
         )
 
-        com_xy = (
-            self.com_xy_buffer[:n]
+        com_pos = (
+            self.com_pos_buffer[:n]
             .detach()
             .cpu()
             .numpy()
@@ -348,12 +348,77 @@ class CopSupportLogger:
             cop_history[::video_stride]
         )
 
-        video_com = (
-            com_xy[::video_stride]
+        video_com_pos = (
+            com_pos[::video_stride]
         )
+
+        video_com = video_com_pos[:, :2]
 
         video_time = (
             time_history[::video_stride]
+        )
+
+        # =====================================================
+        # Capture Point theo Linear Inverted Pendulum Model
+        # =====================================================
+
+        num_video_samples = len(video_com)
+
+        if num_video_samples >= 3:
+            com_velocity_xy = np.gradient(
+                video_com,
+                self.env.step_dt,
+                axis=0,
+                edge_order=2,
+            )
+        elif num_video_samples == 2:
+            com_velocity_xy = np.gradient(
+                video_com,
+                self.env.step_dt,
+                axis=0,
+            )
+        else:
+            com_velocity_xy = np.zeros_like(
+                video_com
+            )
+
+        # Terrain của task balance nằm tại z = 0
+        ground_height = 0.0
+
+        # LIPM giả thiết chiều cao COM không đổi
+        com_height = float(
+            video_com_pos[0, 2]
+            - ground_height
+        )
+
+        if com_height <= 0.0:
+            raise ValueError(
+                f"Invalid COM height: {com_height}"
+            )
+
+        gravity = float(
+            np.linalg.norm(
+                self.env.sim.mj_model.opt.gravity
+            )
+        )
+
+        omega_0 = np.sqrt(
+            gravity / com_height
+        )
+
+        video_capture_point = (
+            video_com
+            + com_velocity_xy / omega_0
+        )
+
+        print(
+            f"LIPM COM height: "
+            f"{com_height:.4f} m"
+        )
+
+        print(
+            f"LIPM natural frequency: "
+            f"{omega_0:.4f} rad/s"
         )
 
         video_fps = int(
@@ -370,6 +435,9 @@ class CopSupportLogger:
             time_history=video_time,
             cop_history=video_cop,
             com_history=video_com,
+            capture_point_history=(
+                video_capture_point
+            ),
             output_path=output_path,
             fps=video_fps,
         )
