@@ -7,4 +7,4 @@ __pycache__/
 *.pyc
 
 # Evaluation videos
-balance/eval/videos/
+balance/eval/logs/

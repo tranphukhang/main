@@ -23,8 +23,9 @@ CHECKPOINT = Path(
     "model_599.pt"
 )
 
-EPISODE_LENGTH_S = 10.0
+EPISODE_LENGTH_S = 12.0
 TEST_FORCE_N = 15.0
+COUNT_DOWN_S = 3.0
 
 
 def main():
@@ -55,8 +56,12 @@ def main():
 
     # Đánh giá trực tiếp với lực tối đa 15 N
     env_cfg.events["body_impulse"].params["force_range"] = (
-        -TEST_FORCE_N,
         TEST_FORCE_N,
+        TEST_FORCE_N,
+    )
+    env_cfg.events["body_impulse"].params["cooldown_s"] = (
+        COUNT_DOWN_S,
+        COUNT_DOWN_S,
     )
 
     device = (
@@ -75,6 +80,14 @@ def main():
         render_mode="rgb_array",
     )
 
+    # ========================================================
+    # Off-screen visualization
+    # ========================================================
+
+    offscreen_renderer = env._offline_renderer
+    renderer_option = offscreen_renderer._opt
+    render_model = offscreen_renderer._model
+
     # --------------------------------------------------------
     # Hiển thị contact point và contact force trong video
     # --------------------------------------------------------
@@ -88,6 +101,23 @@ def main():
     renderer_option.flags[
         mujoco.mjtVisFlag.mjVIS_CONTACTFORCE
     ] = 1
+
+    # Hiển thị hệ trục tọa độ world
+    renderer_option.frame = (
+        mujoco.mjtFrame.mjFRAME_WORLD.value
+    )
+
+    # Kích thước contact point
+    render_model.vis.scale.contactwidth = 0.9
+    render_model.vis.scale.contactheight = 0.3
+
+    # Độ dày và chiều dài vector contact force
+    render_model.vis.scale.forcewidth = 0.3
+    render_model.vis.map.force = 0.015
+
+    # Kích thước hệ trục tọa độ
+    render_model.vis.scale.framelength = 3.0
+    render_model.vis.scale.framewidth = 0.3
 
     num_steps = int(
         env_cfg.episode_length_s / env.step_dt
