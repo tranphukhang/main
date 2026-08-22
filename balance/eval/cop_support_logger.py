@@ -10,6 +10,9 @@ from balance.eval.support_polygon import (
     compute_support_polygons,
     create_support_polygon_animation,
 )
+from balance.eval.stability_timeseries import (
+    create_stability_timeseries_animation,
+)
 
 
 class CopSupportLogger:
@@ -459,5 +462,23 @@ class CopSupportLogger:
                 video_capture_point
             ),
             output_path=output_path,
+            fps=video_fps,
+        )
+
+        timeseries_output_path = (
+            self.output_dir
+            / "stability_timeseries.mp4"
+        )
+
+        create_stability_timeseries_animation(
+            time_history=video_time,
+            com_history=video_com,
+            cop_history=video_cop,
+            capture_point_history=(
+                video_capture_point
+            ),
+            output_path=(
+                timeseries_output_path
+            ),
             fps=video_fps,
         )
