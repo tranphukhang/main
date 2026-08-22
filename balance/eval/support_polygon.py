@@ -244,7 +244,23 @@ def create_support_polygon_animation(
         ]
     )
 
+    finite_cop = np.asarray(
+        cop_history
+    )
+
+    finite_cop = finite_cop[
+        np.all(
+            np.isfinite(finite_cop),
+            axis=1,
+        )
+    ]
+
     limit_points = valid_points.copy()
+
+    if len(finite_cop) > 0:
+        limit_points.append(
+            finite_cop
+        )
 
     if len(finite_com) > 0:
         limit_points.append(
@@ -266,7 +282,21 @@ def create_support_polygon_animation(
     y_min = np.min(all_points[:, 1])
     y_max = np.max(all_points[:, 1])
 
-    margin = 0.05
+    x_center = 0.5 * (
+        x_min + x_max
+    )
+
+    y_center = 0.5 * (
+        y_min + y_max
+    )
+
+    half_span = max(
+        0.5 * (x_max - x_min),
+        0.5 * (y_max - y_min),
+        0.05,
+    )
+
+    half_span *= 1.10
 
     # =========================================================
     # 2. Tạo figure
@@ -278,13 +308,13 @@ def create_support_polygon_animation(
     )
 
     ax.set_xlim(
-        x_min - margin,
-        x_max + margin,
+        x_center - half_span,
+        x_center + half_span,
     )
 
     ax.set_ylim(
-        y_min - margin,
-        y_max + margin,
+        y_center - half_span,
+        y_center + half_span,
     )
 
     ax.set_aspect(

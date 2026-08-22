@@ -9,16 +9,18 @@ from matplotlib.animation import (
 
 
 def _compute_y_limits(
-    signal_1,
-    signal_2,
+    *signals,
+    padding_ratio=0.10,
+    min_span=1.0e-3,
+    symmetric=False,
 ):
-    """Tính giới hạn trục Y từ các giá trị hữu hạn."""
+    """Tính giới hạn trục Y phù hợp dữ liệu."""
 
     values = np.concatenate(
-        (
-            np.asarray(signal_1).reshape(-1),
-            np.asarray(signal_2).reshape(-1),
-        )
+        [
+            np.asarray(signal).reshape(-1)
+            for signal in signals
+        ]
     )
 
     finite_values = values[
@@ -36,19 +38,31 @@ def _compute_y_limits(
         np.max(finite_values)
     )
 
-    value_range = (
-        value_max - value_min
+    if symmetric:
+        half_span = max(
+            abs(value_min),
+            abs(value_max),
+            0.5 * min_span,
+        )
+
+        half_span *= (
+            1.0 + padding_ratio
+        )
+
+        return -half_span, half_span
+
+    value_span = max(
+        value_max - value_min,
+        min_span,
     )
 
-    # Tránh giới hạn trục bằng nhau
-    if value_range < 1.0e-6:
-        margin = 0.01
-    else:
-        margin = 0.1 * value_range
+    padding = (
+        padding_ratio * value_span
+    )
 
     return (
-        value_min - margin,
-        value_max + margin,
+        value_min - padding,
+        value_max + padding,
     )
 
 
@@ -279,32 +293,32 @@ def create_stability_timeseries_animation(
             loc="upper right"
         )
 
-    ax_com_x.set_ylim(
-        *_compute_y_limits(
-            com_history[:, 0],
-            capture_point_history[:, 0],
-        )
+    x_position_limits = _compute_y_limits(
+        com_history[:, 0],
+        cop_history[:, 0],
+        capture_point_history[:, 0],
     )
 
-    ax_com_y.set_ylim(
-        *_compute_y_limits(
-            com_history[:, 1],
-            capture_point_history[:, 1],
-        )
+    y_position_limits = _compute_y_limits(
+        com_history[:, 1],
+        cop_history[:, 1],
+        capture_point_history[:, 1],
+    )
+
+    ax_com_x.set_ylim(
+        *x_position_limits
     )
 
     ax_cop_x.set_ylim(
-        *_compute_y_limits(
-            cop_history[:, 0],
-            capture_point_history[:, 0],
-        )
+        *x_position_limits
+    )
+
+    ax_com_y.set_ylim(
+        *y_position_limits
     )
 
     ax_cop_y.set_ylim(
-        *_compute_y_limits(
-            cop_history[:, 1],
-            capture_point_history[:, 1],
-        )
+        *y_position_limits
     )
 
     # Đường thẳng biểu diễn thời điểm hiện tại
@@ -594,28 +608,32 @@ def create_stability_velocity_animation(
     ax_com_vx.set_ylim(
         *_compute_y_limits(
             com_velocity_history[:, 0],
-            com_velocity_history[:, 0],
+            symmetric=True,
         )
     )
 
     ax_com_vy.set_ylim(
         *_compute_y_limits(
             com_velocity_history[:, 1],
-            com_velocity_history[:, 1],
+            symmetric=True,
         )
     )
 
     ax_cp_vx.set_ylim(
         *_compute_y_limits(
-            capture_point_velocity_history[:, 0],
-            capture_point_velocity_history[:, 0],
+            capture_point_velocity_history[
+                :, 0
+            ],
+            symmetric=True,
         )
     )
 
     ax_cp_vy.set_ylim(
         *_compute_y_limits(
-            capture_point_velocity_history[:, 1],
-            capture_point_velocity_history[:, 1],
+            capture_point_velocity_history[
+                :, 1
+            ],
+            symmetric=True,
         )
     )
 
