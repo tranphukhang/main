@@ -12,6 +12,7 @@ from balance.eval.support_polygon import (
 )
 from balance.eval.stability_timeseries import (
     create_stability_timeseries_animation,
+    create_stability_velocity_animation,
 )
 
 
@@ -432,6 +433,30 @@ class CopSupportLogger:
             + com_velocity_xy / omega_0
         )
 
+        if num_video_samples >= 3:
+            capture_point_velocity_xy = (
+                np.gradient(
+                    video_capture_point,
+                    self.env.step_dt,
+                    axis=0,
+                    edge_order=2,
+                )
+            )
+        elif num_video_samples == 2:
+            capture_point_velocity_xy = (
+                np.gradient(
+                    video_capture_point,
+                    self.env.step_dt,
+                    axis=0,
+                )
+            )
+        else:
+            capture_point_velocity_xy = (
+                np.zeros_like(
+                    video_capture_point
+                )
+            )
+
         print(
             f"LIPM reference COM height "
             f"(mean of first "
@@ -480,5 +505,20 @@ class CopSupportLogger:
             output_path=(
                 timeseries_output_path
             ),
+            fps=video_fps,
+        )
+
+        velocity_output_path = (
+            self.output_dir
+            / "stability_velocity.mp4"
+        )
+
+        create_stability_velocity_animation(
+            time_history=video_time,
+            com_velocity_history=com_velocity_xy,
+            capture_point_velocity_history=(
+                capture_point_velocity_xy
+            ),
+            output_path=velocity_output_path,
             fps=video_fps,
         )
