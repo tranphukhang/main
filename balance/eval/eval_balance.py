@@ -11,7 +11,7 @@ from mjlab.utils.wrappers import VideoRecorder
 
 from balance.balance_env_cfg import balance_env_cfg
 from balance.ppo_cfg import balance_ppo_runner_cfg
-from balance.eval.cop_support_logger import (
+from evaluation.cop_support_logger import (
     CopSupportLogger,
 )
 

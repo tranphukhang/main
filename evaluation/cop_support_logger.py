@@ -5,12 +5,12 @@ import numpy as np
 import torch
 import warp as wp
 
-from balance.eval.cop import compute_cop
-from balance.eval.support_polygon import (
+from evaluation.cop import compute_cop
+from evaluation.support_polygon import (
     compute_support_polygons,
     create_support_polygon_animation,
 )
-from balance.eval.stability_timeseries import (
+from evaluation.stability_timeseries import (
     create_stability_timeseries_animation,
     create_stability_velocity_animation,
 )
