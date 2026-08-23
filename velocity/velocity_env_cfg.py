@@ -20,6 +20,7 @@ from mjlab.managers.observation_manager import (
 from mjlab.managers.reward_manager import RewardTermCfg
 from mjlab.managers.scene_entity_config import SceneEntityCfg
 from mjlab.managers.termination_manager import TerminationTermCfg
+from mjlab.managers.curriculum_manager import CurriculumTermCfg
 from mjlab.scene import SceneCfg
 from mjlab.sim import MujocoCfg, SimulationCfg
 from mjlab.terrains import TerrainEntityCfg
@@ -36,6 +37,7 @@ from velocity.rewards import (
     feet_air_time,
     feet_slip,
 )
+from velocity.curriculums import velocity_command_curriculum
 
 from robot_cfg import ACTUATED_JOINTS, ROBOT_CFG
 
@@ -153,7 +155,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
             # Phase 1: chỉ học bước tiến.
             ranges=UniformVelocityCommandCfg.Ranges(
-                lin_vel_x=(0.05, 0.25),
+                lin_vel_x=(0.0, 0.0),
                 lin_vel_y=(0.0, 0.0),
                 ang_vel_z=(0.0, 0.0),
             ),
@@ -185,6 +187,50 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         "reset_scene_to_default": EventTermCfg(
             func=mdp.reset_scene_to_default,
             mode="reset",
+        ),
+    }
+
+    # =========================================================
+    # Curriculum
+    # =========================================================
+
+    rollout_steps_per_iteration = 24
+
+    curriculum = {
+        "command_velocity": CurriculumTermCfg(
+            func=velocity_command_curriculum,
+            params={
+                "command_name": "twist",
+                "stages": [
+                    {
+                        "step": 0,
+                        "lin_vel_x": (
+                            0.0,
+                            0.0,
+                        ),
+                    },
+                    {
+                        "step": (
+                            100
+                            * rollout_steps_per_iteration
+                        ),
+                        "lin_vel_x": (
+                            0.05,
+                            0.15,
+                        ),
+                    },
+                    {
+                        "step": (
+                            200
+                            * rollout_steps_per_iteration
+                        ),
+                        "lin_vel_x": (
+                            0.05,
+                            0.25,
+                        ),
+                    },
+                ],
+            },
         ),
     }
 
