@@ -187,9 +187,14 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 "command_name": "twist",
                 "std": 0.2,
             },
-
-            
         ),
+
+        "termination_penalty": RewardTermCfg(
+            func=mdp.is_terminated,
+            weight=-1.0,
+        ),
+
+        
     }
 
     # =========================================================
