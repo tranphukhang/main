@@ -155,7 +155,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
             # Phase 1: chỉ học bước tiến.
             ranges=UniformVelocityCommandCfg.Ranges(
-                lin_vel_x=(0.0, 0.0),
+                lin_vel_x=(0.05, 0.25),
                 lin_vel_y=(0.0, 0.0),
                 ang_vel_z=(0.0, 0.0),
             ),
@@ -286,19 +286,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=-0.01,
         ),
 
-        "joint_torque": RewardTermCfg(
-            func=mdp.joint_torques_l2,
-            weight=-5.0e-5,
-        ),
-
-        "joint_acceleration": RewardTermCfg(
-            func=mdp.joint_acc_l2,
-            weight=-1.0e-7,
-            params={
-                "asset_cfg": robot_cfg,
-            },
-        ),
-
         "support_contact": RewardTermCfg(
             func=support_contact_reward,
             weight=0.5,
@@ -373,7 +360,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         terminations=terminations,
         events=events,
         metrics=metrics,
-        curriculum=curriculum,
+        curriculum={},
 
         sim=SimulationCfg(
             mujoco=MujocoCfg(
