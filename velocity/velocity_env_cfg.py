@@ -281,7 +281,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "action_rate": RewardTermCfg(
             func=mdp.action_rate_l2,
-            weight=-0.01,
+            weight=-0.005,
         ),
 
         "support_contact": RewardTermCfg(
@@ -304,7 +304,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=-0.2,
             params={
                 "command_name": "twist",
-                "command_threshold": 0.1,
+                "command_threshold": 0.05,
                 "asset_cfg": feet_site_cfg,
             },
         ),
@@ -358,7 +358,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         terminations=terminations,
         events=events,
         metrics=metrics,
-        curriculum=curriculum,
+        curriculum={},
 
         sim=SimulationCfg(
             mujoco=MujocoCfg(
