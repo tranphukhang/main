@@ -427,3 +427,74 @@ def com_height_l2(
     return torch.square(
         height_error
     )
+
+def feet_lift(
+    env: ManagerBasedRlEnv,
+    asset_cfg,
+    command_name: str | None = None,
+    command_threshold: float = 0.05,
+    height_saturation: float = 0.15,
+) -> torch.Tensor:
+    """
+    Thưởng chân vung được nhấc cao hơn mặt đất.
+
+    Reward tăng tuyến tính từ 0 đến 1 khi độ cao chân
+    tăng từ 0 đến height_saturation; cao hơn ngưỡng này
+    không nhận thêm lợi ích.
+    """
+
+    robot = env.scene[asset_cfg.name]
+
+    # Với terrain plane hiện tại, z=0 là mặt đất.
+    foot_height = robot.data.site_pos_w[
+        :,
+        asset_cfg.site_ids,
+        2,
+    ]
+
+    in_contact = torch.stack(
+        (
+            env._left_foot_contact,
+            env._right_foot_contact,
+        ),
+        dim=1,
+    )
+
+    # Chỉ reward khi đúng một chân đang đỡ cơ thể.
+    # Tránh trường hợp robot ngã, cả hai chân đều rời đất
+    # mà vẫn nhận reward.
+    single_support = (
+        torch.sum(in_contact, dim=1) == 1
+    )
+
+    swing_foot = (
+        ~in_contact
+    ) & single_support.unsqueeze(1)
+
+    normalized_height = torch.clamp(
+        foot_height / height_saturation,
+        min=0.0,
+        max=1.0,
+    )
+
+    reward = torch.sum(
+        normalized_height * swing_foot.float(),
+        dim=1,
+    )
+
+    if command_name is not None:
+
+        command = env.command_manager.get_command(
+            command_name
+        )
+
+        command_norm = (
+            torch.norm(command[:, :2], dim=1)
+            + torch.abs(command[:, 2])
+        )
+
+        reward *= (
+            command_norm > command_threshold
+        ).float()
+
+    return reward

@@ -10,7 +10,7 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
     return RslRlOnPolicyRunnerCfg(
 
         actor=RslRlModelCfg(
-            hidden_dims=(256, 128, 64),
+            hidden_dims=(512, 256, 128),
             activation="elu",
             obs_normalization=True,
             distribution_cfg={
@@ -21,7 +21,7 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
         ),
 
         critic=RslRlModelCfg(
-            hidden_dims=(256, 128, 64),
+            hidden_dims=(512, 256, 128),
             activation="elu",
             obs_normalization=True,
         ),

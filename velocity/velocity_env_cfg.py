@@ -36,6 +36,7 @@ from velocity.rewards import (
     velocity_contact_substep,
     feet_air_time,
     feet_slip,
+    feet_lift,
     com_height_l2,
 )
 from velocity.curriculums import velocity_command_curriculum
@@ -320,6 +321,17 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 "std": 0.02,
             },
         ),
+
+        "feet_lift": RewardTermCfg(
+            func=feet_lift,
+            weight=0.2,
+            params={
+                "asset_cfg": feet_site_cfg,
+                "command_name": "twist",
+                "command_threshold": 0.05,
+                "height_saturation": 0.15,
+            },
+        ),
     }
 
     # =========================================================
@@ -361,7 +373,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         terminations=terminations,
         events=events,
         metrics=metrics,
-        curriculum={},
+        curriculum=curriculum,
 
         sim=SimulationCfg(
             mujoco=MujocoCfg(
