@@ -208,7 +208,10 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             },
         ),
 
-        
+        "action_rate": RewardTermCfg(
+            func=mdp.action_rate_l2,
+            weight=-0.01,
+        ),
     }
 
     # =========================================================
