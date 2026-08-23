@@ -180,49 +180,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     # =========================================================
 
     rewards: dict[str, RewardTermCfg] = {
-        "alive": RewardTermCfg(
-            func=mdp.is_alive,
-            weight=1.0,
-        ),
-        "termination_penalty": RewardTermCfg(
-            func=mdp.is_terminated,
-            weight=-100.0,
-        ),
-        "track_linear_velocity": RewardTermCfg(
-            func=track_linear_velocity,
-            weight=1.0,
-            params={
-                "command_name": "twist",
-                "std": 0.2,
-            },
-        ),
-        "track_angular_velocity": RewardTermCfg(
-            func=track_angular_velocity,
-            weight=0.5,
-            params={
-                "command_name": "twist",
-                "std": 0.5,
-            },
-        ),
-        "orientation": RewardTermCfg(
-            func=mdp.flat_orientation_l2,
-            weight=-2.0,
-        ),
-        "joint_acceleration": RewardTermCfg(
-            func=mdp.joint_acc_l2,
-            weight=-2.0e-7,
-            params={
-                "asset_cfg": robot_cfg,
-            },
-        ),
-        "joint_torque": RewardTermCfg(
-            func=mdp.joint_torques_l2,
-            weight=-1.0e-6,
-        ),
-        "action_rate": RewardTermCfg(
-            func=mdp.action_rate_l2,
-            weight=-0.02,
-        ),
     }
 
     # =========================================================
