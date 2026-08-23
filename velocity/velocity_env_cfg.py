@@ -205,21 +205,21 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 "stages": [
                     {
                         "step": 0,
-                        "weight": -0.01,
+                        "weight": -0.005,
                     },
                     {
                         "step": (
                             200
                             * rollout_steps_per_iteration
                         ),
-                        "weight": -0.02,
+                        "weight": -0.01,
                     },
                     {
                         "step": (
                             400
                             * rollout_steps_per_iteration
                         ),
-                        "weight": -0.03,
+                        "weight": -0.015,
                     },
                 ],
             },
@@ -295,7 +295,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
 
         "feet_slip": RewardTermCfg(
             func=feet_slip,
-            weight=-0.25,
+            weight=-0.2,
             params={
                 "command_name": "twist",
                 "command_threshold": 0.1,
@@ -309,27 +309,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             params={
                 "asset_cfg": limited_joint_cfg,
                 "soft_ratio": 0.8,
-            },
-        ),
-
-        "com_height": RewardTermCfg(
-            func=com_height_l2,
-            weight=-0.2,
-            params={
-                "asset_cfg": robot_cfg,
-                "target_height": 0.29,
-                "std": 0.02,
-            },
-        ),
-
-        "feet_lift": RewardTermCfg(
-            func=feet_lift,
-            weight=0.2,
-            params={
-                "asset_cfg": feet_site_cfg,
-                "command_name": "twist",
-                "command_threshold": 0.05,
-                "height_saturation": 0.15,
             },
         ),
     }

@@ -477,8 +477,12 @@ def feet_lift(
         max=1.0,
     )
 
+    # sqrt làm reward nhạy hơn với các độ cao thấp.
+    # Ví dụ 2 cm: 0.133 -> 0.365 thay vì chỉ 0.133.
+    lift_score = torch.sqrt(normalized_height)
+
     reward = torch.sum(
-        normalized_height * swing_foot.float(),
+        lift_score * swing_foot.float(),
         dim=1,
     )
 
