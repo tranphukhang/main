@@ -8,3 +8,4 @@ __pycache__/
 
 # Evaluation videos
 balance/eval/logs/
+velocity/eval/logs/
