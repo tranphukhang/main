@@ -197,79 +197,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     rollout_steps_per_iteration = 24
 
     curriculum = {
-        # "command_velocity": CurriculumTermCfg(
-        #     func=velocity_command_curriculum,
-        #     params={
-        #         "command_name": "twist",
-        #         "stages": [
-        #             {
-        #                 "step": 0,
-        #                 "lin_vel_x": (
-        #                     0.0,
-        #                     0.0,
-        #                 ),
-        #             },
-        #             {
-        #                 "step": (
-        #                     100
-        #                     * rollout_steps_per_iteration
-        #                 ),
-        #                 "lin_vel_x": (
-        #                     0.05,
-        #                     0.15,
-        #                 ),
-        #             },
-        #             {
-        #                 "step": (
-        #                     200
-        #                     * rollout_steps_per_iteration
-        #                 ),
-        #                 "lin_vel_x": (
-        #                     0.05,
-        #                     0.25,
-        #                 ),
-        #             },
-        #         ],
-        #     },
-        # ),
-
-        "joint_acceleration_weight": (
-            CurriculumTermCfg(
-                func=mdp.reward_curriculum,
-                params={
-                    "reward_name": (
-                        "joint_acceleration"
-                    ),
-                    "stages": [
-                        {
-                            "step": 0,
-                            "weight": -1.0e-12,
-                        },
-                        {
-                            "step": (
-                                200
-                                * rollout_steps_per_iteration
-                            ),
-                            "weight": -1.0e-10,
-                        },
-                        {
-                            "step": (
-                                400
-                                * rollout_steps_per_iteration
-                            ),
-                            "weight": -1.0e-8,
-                        },
-                        {
-                            "step": (
-                                600
-                                * rollout_steps_per_iteration
-                            ),
-                            "weight": -1.0e-7,
-                        },
-                    ],
-                },
-            )
-        ),
     }
 
     # =========================================================
@@ -324,14 +251,6 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=-0.01,
         ),
 
-        "joint_acceleration": RewardTermCfg(
-            func=mdp.joint_acc_l2,
-            weight=-1.0e-12,
-            params={
-                "asset_cfg": robot_cfg,
-            },
-        ),
-
         "support_contact": RewardTermCfg(
             func=support_contact_reward,
             weight=0.5,
@@ -343,7 +262,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             params={
                 "threshold": 0.4,
                 "command_name": "twist",
-                "command_threshold": 0.1,
+                "command_threshold": 0.05,
             },
         ),
 
@@ -406,7 +325,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         terminations=terminations,
         events=events,
         metrics=metrics,
-        curriculum=curriculum,
+        curriculum={},
 
         sim=SimulationCfg(
             mujoco=MujocoCfg(
