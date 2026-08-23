@@ -199,6 +199,15 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=-2.0,
         ),
 
+        "track_angular_velocity": RewardTermCfg(
+            func=track_angular_velocity,
+            weight=0.5,
+            params={
+                "command_name": "twist",
+                "std": 0.5,
+            },
+        ),
+
         
     }
 
