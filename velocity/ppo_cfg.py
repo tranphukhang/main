@@ -51,7 +51,7 @@ def velocity_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
 
         num_steps_per_env=24,
         save_interval=50,
-        max_iterations=600,
+        max_iterations=1000,
         clip_actions=1.0,
         logger="tensorboard",
         upload_model=False,
