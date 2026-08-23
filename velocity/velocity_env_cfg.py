@@ -2,38 +2,27 @@ import math
 
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs import mdp
-from mjlab.envs.mdp.actions import (
-    JointPositionActionCfg,
-)
+from mjlab.envs.mdp.actions import JointPositionActionCfg
 from mjlab.tasks.velocity.mdp import (
     UniformVelocityCommandCfg,
     track_angular_velocity,
     track_linear_velocity,
 )
-
-from mjlab.managers.action_manager import (
-    ActionTermCfg,
+from mjlab.managers.metrics_manager import MetricsTermCfg
+from balance.rewards import (
+    support_contact_substep,
+    support_contact_reward,
 )
-from mjlab.managers.command_manager import (
-    CommandTermCfg,
-)
-from mjlab.managers.event_manager import (
-    EventTermCfg,
-)
+from mjlab.managers.action_manager import ActionTermCfg
+from mjlab.managers.command_manager import CommandTermCfg
+from mjlab.managers.event_manager import EventTermCfg
 from mjlab.managers.observation_manager import (
     ObservationGroupCfg,
     ObservationTermCfg,
 )
-from mjlab.managers.reward_manager import (
-    RewardTermCfg,
-)
-from mjlab.managers.scene_entity_config import (
-    SceneEntityCfg,
-)
-from mjlab.managers.termination_manager import (
-    TerminationTermCfg,
-)
-
+from mjlab.managers.reward_manager import RewardTermCfg
+from mjlab.managers.scene_entity_config import SceneEntityCfg
+from mjlab.managers.termination_manager import TerminationTermCfg
 from mjlab.scene import SceneCfg
 from mjlab.sim import MujocoCfg, SimulationCfg
 from mjlab.terrains import TerrainEntityCfg
@@ -165,7 +154,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     }
 
     # =========================================================
-    # Reset event
+    # Events
     # =========================================================
 
     events = {
@@ -176,7 +165,21 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     }
 
     # =========================================================
-    # Initial rewards
+    # Metrics
+    # =========================================================
+    metrics = {
+        "support_contact_substep": MetricsTermCfg(
+            func=support_contact_substep,
+            params={
+                "min_normal_force": 1.0,
+            },
+            per_substep=True,
+            reduce="mean",
+        ),
+    }
+
+    # =========================================================
+    # Rewards
     # =========================================================
 
     rewards: dict[str, RewardTermCfg] = {
@@ -225,6 +228,11 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 "asset_cfg": robot_cfg,
             },
         ),
+
+        "support_contact": RewardTermCfg(
+            func=support_contact_reward,
+            weight=0.5,
+        ),
     }
 
     # =========================================================
@@ -265,7 +273,9 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         rewards=rewards,
         terminations=terminations,
         events=events,
+        metrics=metrics,
         curriculum={},
+
         sim=SimulationCfg(
             mujoco=MujocoCfg(
                 timestep=0.0005,
