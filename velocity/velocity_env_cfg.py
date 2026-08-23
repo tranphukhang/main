@@ -373,7 +373,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         terminations=terminations,
         events=events,
         metrics=metrics,
-        curriculum={},
+        curriculum=curriculum,
 
         sim=SimulationCfg(
             mujoco=MujocoCfg(
