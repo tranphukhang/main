@@ -397,3 +397,33 @@ def feet_slip(
         ).float()
 
     return slip_cost
+
+def com_height_l2(
+    env: ManagerBasedRlEnv,
+    asset_cfg,
+    target_height: float = 0.29,
+    std: float = 0.02,
+) -> torch.Tensor:
+    """Phạt sai lệch chiều cao COM toàn robot."""
+
+    robot = env.scene[
+        asset_cfg.name
+    ]
+
+    root_body_id = (
+        robot.indexing.root_body_id
+    )
+
+    com_height = env.sim.data.subtree_com[
+        :,
+        root_body_id,
+        2,
+    ]
+
+    height_error = (
+        com_height - target_height
+    ) / std
+
+    return torch.square(
+        height_error
+    )

@@ -36,6 +36,7 @@ from velocity.rewards import (
     velocity_contact_substep,
     feet_air_time,
     feet_slip,
+    com_height_l2,
 )
 from velocity.curriculums import velocity_command_curriculum
 
@@ -153,9 +154,8 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             heading_command=False,
             debug_vis=True,
 
-            # Phase 1: chỉ học bước tiến.
             ranges=UniformVelocityCommandCfg.Ranges(
-                lin_vel_x=(0.05, 0.25),
+                lin_vel_x=(0.0, 0.25),
                 lin_vel_y=(0.0, 0.0),
                 ang_vel_z=(0.0, 0.0),
             ),
@@ -197,6 +197,32 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     rollout_steps_per_iteration = 24
 
     curriculum = {
+        "action_rate_weight": CurriculumTermCfg(
+            func=mdp.reward_curriculum,
+            params={
+                "reward_name": "action_rate",
+                "stages": [
+                    {
+                        "step": 0,
+                        "weight": -0.01,
+                    },
+                    {
+                        "step": (
+                            200
+                            * rollout_steps_per_iteration
+                        ),
+                        "weight": -0.02,
+                    },
+                    {
+                        "step": (
+                            400
+                            * rollout_steps_per_iteration
+                        ),
+                        "weight": -0.03,
+                    },
+                ],
+            },
+        ),
     }
 
     # =========================================================
@@ -282,6 +308,16 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             params={
                 "asset_cfg": limited_joint_cfg,
                 "soft_ratio": 0.8,
+            },
+        ),
+
+        "com_height": RewardTermCfg(
+            func=com_height_l2,
+            weight=-0.2,
+            params={
+                "asset_cfg": robot_cfg,
+                "target_height": 0.29,
+                "std": 0.02,
             },
         ),
     }
