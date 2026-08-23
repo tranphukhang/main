@@ -180,6 +180,16 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     # =========================================================
 
     rewards: dict[str, RewardTermCfg] = {
+        "track_linear_velocity": RewardTermCfg(
+            func=track_linear_velocity,
+            weight=1.0,
+            params={
+                "command_name": "twist",
+                "std": 0.2,
+            },
+
+            
+        ),
     }
 
     # =========================================================
