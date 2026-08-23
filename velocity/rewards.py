@@ -3,9 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import mujoco_warp as mjwarp
-import numpy as np
 import torch
-import warp as wp
 
 from balance.rewards import support_contact_substep
 
