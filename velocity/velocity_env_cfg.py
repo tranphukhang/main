@@ -2,6 +2,7 @@ import math
 
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs import mdp
+
 from mjlab.envs.mdp.actions import JointPositionActionCfg
 from mjlab.tasks.velocity.mdp import (
     UniformVelocityCommandCfg,
@@ -9,10 +10,6 @@ from mjlab.tasks.velocity.mdp import (
     track_linear_velocity,
 )
 from mjlab.managers.metrics_manager import MetricsTermCfg
-from balance.rewards import (
-    support_contact_substep,
-    support_contact_reward,
-)
 from mjlab.managers.action_manager import ActionTermCfg
 from mjlab.managers.command_manager import CommandTermCfg
 from mjlab.managers.event_manager import EventTermCfg
@@ -29,6 +26,14 @@ from mjlab.terrains import TerrainEntityCfg
 from mjlab.utils.spec_config import GeomCfg
 from mjlab.viewer import ViewerConfig
 
+
+from balance.rewards import support_contact_reward
+from velocity.rewards import (
+    velocity_contact_substep,
+    feet_air_time,
+    feet_slip,
+)
+
 from robot_cfg import ACTUATED_JOINTS, ROBOT_CFG
 
 
@@ -41,6 +46,12 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     robot_cfg = SceneEntityCfg(
         "robot",
         joint_names=ACTUATED_JOINTS,
+        preserve_order=True,
+    )
+
+    feet_site_cfg = SceneEntityCfg(
+        "robot",
+        site_names=("left_foot", "right_foot"),
         preserve_order=True,
     )
 
@@ -169,7 +180,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     # =========================================================
     metrics = {
         "support_contact_substep": MetricsTermCfg(
-            func=support_contact_substep,
+            func=velocity_contact_substep,
             params={
                 "min_normal_force": 1.0,
             },
@@ -232,6 +243,26 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         "support_contact": RewardTermCfg(
             func=support_contact_reward,
             weight=0.5,
+        ),
+
+        "feet_air_time": RewardTermCfg(
+            func=feet_air_time,
+            weight=1.0,
+            params={
+                "threshold": 0.4,
+                "command_name": "twist",
+                "command_threshold": 0.1,
+            },
+        ),
+
+        "feet_slip": RewardTermCfg(
+            func=feet_slip,
+            weight=-0.25,
+            params={
+                "command_name": "twist",
+                "command_threshold": 0.1,
+                "asset_cfg": feet_site_cfg,
+            },
         ),
     }
 
