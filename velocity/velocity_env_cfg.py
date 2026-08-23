@@ -217,6 +217,14 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             func=mdp.joint_torques_l2,
             weight=-5.0e-5,
         ),
+
+        "joint_acceleration": RewardTermCfg(
+            func=mdp.joint_acc_l2,
+            weight=-1.0e-7,
+            params={
+                "asset_cfg": robot_cfg,
+            },
+        ),
     }
 
     # =========================================================
