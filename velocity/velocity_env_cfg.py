@@ -27,7 +27,10 @@ from mjlab.utils.spec_config import GeomCfg
 from mjlab.viewer import ViewerConfig
 
 
-from balance.rewards import support_contact_reward
+from balance.rewards import (
+    joint_soft_limit_penalty,
+    support_contact_reward,
+)
 from velocity.rewards import (
     velocity_contact_substep,
     feet_air_time,
