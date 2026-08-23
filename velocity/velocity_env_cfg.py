@@ -5,7 +5,6 @@ from mjlab.envs import mdp
 
 from mjlab.envs.mdp.actions import JointPositionActionCfg
 from mjlab.tasks.velocity.mdp import (
-    UniformVelocityCommandCfg,
     track_angular_velocity,
     track_linear_velocity,
 )
@@ -36,10 +35,8 @@ from velocity.rewards import (
     velocity_contact_substep,
     feet_air_time,
     feet_slip,
-    feet_lift,
-    com_height_l2,
 )
-from velocity.curriculums import velocity_command_curriculum
+from velocity.commands import AxisAlignedVelocityCommandCfg
 
 from robot_cfg import ACTUATED_JOINTS, ROBOT_CFG
 
@@ -140,25 +137,34 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
     # =========================================================
 
     commands: dict[str, CommandTermCfg] = {
-        "twist": UniformVelocityCommandCfg(
+        "twist": AxisAlignedVelocityCommandCfg(
             entity_name="robot",
 
             resampling_time_range=(4.0, 6.0),
 
-            # 10% môi trường được yêu cầu đứng yên.
+            # 10% environment nhận lệnh đứng yên.
             rel_standing_envs=0.1,
 
+            # Trong 90% environment chuyển động:
+            # 50% đi theo x và 50% đi theo y.
+            rel_x_commands=0.5,
+
             rel_heading_envs=0.0,
-            rel_world_envs=0.0,
-            rel_forward_envs=0.0,
 
             heading_command=False,
             debug_vis=True,
 
-            ranges=UniformVelocityCommandCfg.Ranges(
-                lin_vel_x=(0.0, 0.25),
-                lin_vel_y=(0.0, 0.0),
-                ang_vel_z=(0.0, 0.0),
+            ranges=(
+                AxisAlignedVelocityCommandCfg.Ranges(
+                    # Âm: đi lùi; dương: đi tới.
+                    lin_vel_x=(-0.25, 0.25),
+
+                    # Âm/dương: đi ngang phải/trái.
+                    lin_vel_y=(-0.25, 0.25),
+
+                    # Chưa học xoay tại chỗ.
+                    ang_vel_z=(0.0, 0.0),
+                )
             ),
         ),
     }
@@ -209,14 +215,14 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                     },
                     {
                         "step": (
-                            200
+                            300
                             * rollout_steps_per_iteration
                         ),
                         "weight": -0.01,
                     },
                     {
                         "step": (
-                            400
+                            600
                             * rollout_steps_per_iteration
                         ),
                         "weight": -0.015,
