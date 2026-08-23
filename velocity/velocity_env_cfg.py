@@ -194,6 +194,11 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=-1.0,
         ),
 
+        "orientation": RewardTermCfg(
+            func=mdp.flat_orientation_l2,
+            weight=-2.0,
+        ),
+
         
     }
 
