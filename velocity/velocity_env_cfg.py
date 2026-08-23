@@ -55,6 +55,16 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
         preserve_order=True,
     )
 
+    limited_joint_cfg = SceneEntityCfg(
+        "robot",
+        joint_names=(
+            *ACTUATED_JOINTS,
+            "ankle_pitch_passive_4_left",
+            "ankle_pitch_passive_4_right",
+        ),
+        preserve_order=True,
+    )
+
     # =========================================================
     # Observations
     # =========================================================
@@ -262,6 +272,15 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
                 "command_name": "twist",
                 "command_threshold": 0.1,
                 "asset_cfg": feet_site_cfg,
+            },
+        ),
+
+        "joint_limit": RewardTermCfg(
+            func=joint_soft_limit_penalty,
+            weight=-0.1,
+            params={
+                "asset_cfg": limited_joint_cfg,
+                "soft_ratio": 0.8,
             },
         ),
     }
