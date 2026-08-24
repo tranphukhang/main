@@ -312,7 +312,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=-0.2,
             params={
                 "command_name": "twist",
-                "command_threshold": 0.05,
+                "command_threshold": 0.005,
                 "asset_cfg": feet_site_cfg,
             },
         ),
