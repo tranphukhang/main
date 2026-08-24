@@ -284,6 +284,14 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             weight=-0.005,
         ),
 
+        "joint_acceleration": RewardTermCfg(
+            func=mdp.joint_acc_l2,
+            weight=-1.0e-11,
+            params={
+                "asset_cfg": robot_cfg,
+            },
+        ),
+
         "support_contact": RewardTermCfg(
             func=support_contact_reward,
             weight=0.5,
@@ -295,7 +303,7 @@ def velocity_env_cfg() -> ManagerBasedRlEnvCfg:
             params={
                 "threshold": 0.4,
                 "command_name": "twist",
-                "command_threshold": 0.05,
+                "command_threshold": 0.005,
             },
         ),
 
